@@ -1,9 +1,9 @@
 import sys
-from src.exception import CustomException
-from src.logger import logging
-from src.components.data_ingestion import DataIngestion
-from src.components.data_transformation import DataTransformation
-from src.components.model_trainer import ModelTrainer
+from ml.exception import CustomException
+from ml.logger import logging
+from ml.components.data_ingestion import DataIngestion
+from ml.components.data_transformation import DataTransformation
+from ml.components.model_trainer import ModelTrainer
 
 class TrainingPipeline:
     def __init__(self):

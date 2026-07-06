@@ -2,8 +2,8 @@ import os
 import sys
 import pickle
 import pandas as pd
-from src.exception import CustomException
-from src.logger import logging
+from ml.exception import CustomException
+from ml.logger import logging
 
 class PredictionPipeline:
     def __init__(self):

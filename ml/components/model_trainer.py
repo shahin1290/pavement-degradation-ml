@@ -1,8 +1,8 @@
 import os
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score, mean_absolute_error
-from src.utils import save_object
-from src.logger import logging
+from ml.utils import save_object
+from ml.logger import logging
 
 class ModelTrainer:
     def __init__(self):

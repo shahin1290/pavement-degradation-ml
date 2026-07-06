@@ -3,8 +3,8 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, r2_score
-from src.pipelines.prediction_pipeline import PredictionPipeline
-from src.exception import CustomException
+from ml.pipelines.prediction_pipeline import PredictionPipeline
+from ml.exception import CustomException
 
 def evaluate_and_visualize():
     try:

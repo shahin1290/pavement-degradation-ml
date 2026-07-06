@@ -1,5 +1,5 @@
 import pandas as pd
-from src.logger import logging
+from ml.logger import logging
 
 class DataTransformation:
     def process_data(self, train_path, test_path):

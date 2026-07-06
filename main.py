@@ -1,4 +1,4 @@
-from src.pipelines.prediction_pipeline import RoadDataInput, PredictionPipeline
+from ml.pipelines.prediction_pipeline import RoadDataInput, PredictionPipeline
 
 def query_model():
     print("\n" + "="*40)
