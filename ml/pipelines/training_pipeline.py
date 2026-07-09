@@ -39,4 +39,4 @@ class TrainingPipeline:
 if __name__ == "__main__":
     # This allows you to test the pipeline directly by running this script
     pipeline = TrainingPipeline()
-    pipeline.run_pipeline("data/Dataexport från PMSv4_2026-07-06_144059.xlsx")
+    pipeline.run_pipeline("data/data-7-features.xlsx")

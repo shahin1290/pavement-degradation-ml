@@ -11,7 +11,7 @@ class DataTransformation:
             for df in [train_df, test_df]:
                 df['Pavement_Age'] = 2026 - df['Beläggningsår']
                 
-            features = ['Spårdjup max 15', 'ÅDT fordon', 'Pavement_Age', 'Hastighetsgräns']
+            features = ['Spårdjup max 15', 'ÅDT fordon', 'Pavement_Age', 'Hastighetsgräns', 'Spårdjup max 17', 'Vägbredd']
             target = 'IRI höger'
             
             X_train = train_df[features]

@@ -17,7 +17,7 @@ def evaluate_all_methods():
         test_df = pd.read_csv(test_path)
         test_df['Pavement_Age'] = 2026 - test_df['Beläggningsår']
         
-        features = ['Spårdjup max 15', 'ÅDT fordon', 'Pavement_Age', 'Hastighetsgräns']
+        features = ['Spårdjup max 15', 'ÅDT fordon', 'Pavement_Age', 'Hastighetsgräns', 'Spårdjup max 17', 'Vägbredd']
         X_test = test_df[features]
         y_actual = test_df['IRI höger']
 
