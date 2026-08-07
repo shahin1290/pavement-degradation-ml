@@ -22,8 +22,11 @@ function App() {
     setError(null);
     setResult(null);
 
+    // Use environment variable or relative URL
+    const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
     try {
-      const response = await axios.post('http://localhost:8000/api/predict', {
+      const response = await axios.post(`${API_BASE_URL}/api/predict`, {
         spardjup: parseFloat(formData.spardjup),
         adt_fordon: parseInt(formData.adt_fordon),
         belaggningsar: parseInt(formData.belaggningsar),
