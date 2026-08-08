@@ -258,10 +258,11 @@ function App() {
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>1.349</td>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Baseline</td>
               </tr>
-              <tr>
+             <tr>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>Ridge Regression (L2)</td>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>28.1%</td>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>0.942</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>1.333</td>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Baseline</td>
               </tr>
               <tr>
