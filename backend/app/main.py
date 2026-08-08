@@ -5,23 +5,27 @@ from backend.app.services.predictor import predictor_service
 
 app = FastAPI(title="Trafikverket Road IRI Prediction API", version="1.0.0")
 
-# Enable CORS for the frontend React app
+# Enable CORS for local development and deployed frontend (Vercel, EC2, etc.)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True,
+    allow_origins=["*"],  # Allows all origins (Vercel, Localhost, etc.)
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def health_check():
     return {"status": "operational", "service": "pavement-ml-backend"}
 
+
 @app.post("/api/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
     try:
         predicted_iri, condition = predictor_service.predict_iri(request)
-        return PredictionResponse(predicted_iri=predicted_iri, condition=condition)
+        return PredictionResponse(
+            predicted_iri=predicted_iri, condition=condition
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

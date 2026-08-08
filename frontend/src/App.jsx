@@ -3,7 +3,9 @@ import axios from 'axios';
 
 function App() {
   const [formData, setFormData] = useState({
-    spardjup: 4.5,
+    spardjup_15: 4.5,
+    spardjup_17: 5.2,
+    vagbredd: 8.5,
     adt_fordon: 3500,
     belaggningsar: 2021,
     hastighet: 90
@@ -22,15 +24,17 @@ function App() {
     setError(null);
     setResult(null);
 
-    // Use environment variable or relative URL
     const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
     try {
+      // Map form fields to exact JSON keys expected by FastAPI PredictionRequest
       const response = await axios.post(`${API_BASE_URL}/api/predict`, {
-        spardjup: parseFloat(formData.spardjup),
-        adt_fordon: parseInt(formData.adt_fordon),
-        belaggningsar: parseInt(formData.belaggningsar),
-        hastighet: parseInt(formData.hastighet),
+        "Spårdjup max 15": parseFloat(formData.spardjup_15),
+        "Spårdjup max 17": parseFloat(formData.spardjup_17),
+        "Vägbredd": parseFloat(formData.vagbredd),
+        "ÅDT fordon": parseInt(formData.adt_fordon),
+        "Beläggningsår": parseInt(formData.belaggningsar),
+        "Hastighetsgräns": parseInt(formData.hastighet)
       });
       setResult(response.data);
     } catch (err) {
@@ -45,8 +49,16 @@ function App() {
       <h2 style={{ textAlign: 'center', color: '#333' }}>Road Degradation IRI Predictor</h2>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '15px' }}>
-          <label style={{ fontWeight: '500' }}>Rut Depth / Spårdjup max 15 (mm): </label>
-          <input type="number" step="0.1" name="spardjup" value={formData.spardjup} onChange={handleChange} required style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #ccc' }} />
+          <label style={{ fontWeight: '500' }}>Rut Depth Max 15 (mm): </label>
+          <input type="number" step="0.1" name="spardjup_15" value={formData.spardjup_15} onChange={handleChange} required style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #ccc' }} />
+        </div>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ fontWeight: '500' }}>Rut Depth Max 17 (mm): </label>
+          <input type="number" step="0.1" name="spardjup_17" value={formData.spardjup_17} onChange={handleChange} required style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #ccc' }} />
+        </div>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ fontWeight: '500' }}>Road Width / Vägbredd (m): </label>
+          <input type="number" step="0.1" name="vagbredd" value={formData.vagbredd} onChange={handleChange} required style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #ccc' }} />
         </div>
         <div style={{ marginBottom: '15px' }}>
           <label style={{ fontWeight: '500' }}>Traffic Volume / ÅDT fordon: </label>
