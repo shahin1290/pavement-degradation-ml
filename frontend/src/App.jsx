@@ -54,10 +54,10 @@ function App() {
   };
 
   return (
-    <div style={{ maxWidth: '850px', margin: '40px auto', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#222', padding: '0 20px' }}>
+    <div style={{ maxWidth: '850px', margin: '40px auto', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#222', padding: '0 20px', textAlign: 'left' }}>
       
       {/* Header Banner */}
-      <header style={{ textOverflow: 'ellipsis', textAlign: 'center', paddingBottom: '20px', borderBottom: '1px solid #e2e8f0' }}>
+      <header style={{ paddingBottom: '20px', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
         <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', color: '#0f172a' }}>Trafikverket Road IRI Prediction Dashboard</h1>
         <p style={{ margin: '0', fontSize: '15px', color: '#64748b' }}>
           Machine Learning Infrastructure for Predictive Pavement Degradation Modeling
@@ -114,7 +114,7 @@ function App() {
             transition: 'all 0.2s ease'
           }}
         >
-          📊 Model & Data Specs
+          📊 Model & Evaluation Specs
         </button>
 
         <button
@@ -137,7 +137,7 @@ function App() {
 
       {/* TAB 1: LIVE PREDICTOR FORM */}
       {activeTab === 'predictor' && (
-        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', textAlign: 'left' }}>
           <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#0f172a' }}>Evaluate Road Segment Roughness</h2>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '20px' }}>
@@ -214,27 +214,82 @@ function App() {
 
       {/* TAB 2: PROJECT OVERVIEW */}
       {activeTab === 'overview' && (
-        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', lineHeight: '1.6' }}>
+        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', lineHeight: '1.6', textAlign: 'left' }}>
           <h2 style={{ marginTop: '0', color: '#0f172a' }}>Thesis Project Context & Objectives</h2>
           <p>
             Maintaining public road networks requires scalable data-driven methodologies to monitor pavement wear and schedule timely repairs. This thesis project focuses on building an operational machine learning pipeline to predict road roughness—quantified by the <strong>International Roughness Index (IRI)</strong>—using Swedish national road data provided by <strong>Trafikverket</strong>.
           </p>
           
           <h3 style={{ color: '#008080', marginTop: '24px' }}>Core Objectives</h3>
-          <ul style={{ paddingLeft: '20px' }}>
-            <li style={{ marginBottom: '8px' }}><strong>Predictive Deterioration Modeling:</strong> Model non-linear relationships between traffic loading, pavement age, geometry, and surface rutting to predict `IRI höger`.</li>
+          <ul style={{ paddingLeft: '20px', margin: '10px 0' }}>
+            <li style={{ marginBottom: '8px' }}><strong>Predictive Deterioration Modeling:</strong> Model non-linear relationships between traffic loading, pavement age, geometry, and surface rutting to predict right wheel track roughness (<code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>IRI höger</code>).</li>
             <li style={{ marginBottom: '8px' }}><strong>Proactive Maintenance Decision Support:</strong> Provide actionable metrics to assist road authorities (e.g., VTI, Trafikverket) in transitioning from reactive repairs to optimized lifecycle maintenance.</li>
             <li style={{ marginBottom: '8px' }}><strong>End-to-End Cloud Deployment:</strong> Bridge research and production by hosting an inference API on AWS EC2 linked directly to an interactive web dashboard.</li>
           </ul>
         </div>
       )}
 
-      {/* TAB 3: MODEL & DATA SPECS */}
+      {/* TAB 3: MODEL & EVALUATION SPECS */}
       {activeTab === 'features' && (
-        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', lineHeight: '1.6' }}>
-          <h2 style={{ marginTop: '0', color: '#0f172a' }}>Feature Engineering & Condition Classes</h2>
+        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', lineHeight: '1.6', textAlign: 'left' }}>
+          <h2 style={{ marginTop: '0', color: '#0f172a' }}>Modeling Methodology & Performance Evaluation</h2>
           
-          <h3 style={{ color: '#008080', marginTop: '20px' }}>Model Features</h3>
+          <h3 style={{ color: '#008080', marginTop: '20px' }}>Modeling Approach</h3>
+          <p>
+            We evaluated multiple regression architectures to capture non-linear degradation patterns across Swedish road networks, including <strong>Random Forest</strong>, <strong>XGBoost</strong>, <strong>LightGBM</strong>, and <strong>HistGradientBoostingRegressor</strong>.
+          </p>
+
+          <h3 style={{ color: '#008080', marginTop: '24px' }}>Performance Metrics (Test Evaluation)</h3>
+          <ul style={{ paddingLeft: '20px', margin: '10px 0' }}>
+            <li style={{ marginBottom: '8px' }}><strong>Goodness-of-Fit (R² Score):</strong> Evaluated across multi-model cross-validation to maximize variance explained in IRI deterioration.</li>
+            <li style={{ marginBottom: '8px' }}><strong>Mean Absolute Error (MAE):</strong> Quantifies average absolute prediction error in real-world IRI units (mm/m).</li>
+            <li style={{ marginBottom: '8px' }}><strong>Root Mean Squared Error (RMSE):</strong> Penalizes larger prediction outliers to ensure safety-critical reliability across severely degraded segments.</li>
+          </ul>
+
+          <h3 style={{ color: '#008080', marginTop: '28px' }}>Model Benchmark Comparison</h3>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+            <thead>
+              <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
+                <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Model Architecture</th>
+                <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>R² Score</th>
+                <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>MAE (mm/m)</th>
+                <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>RMSE (mm/m)</th>
+                <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>Random Forest Regressor</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Baseline</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>XGBoost Regressor</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Candidate</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>LightGBM Regressor</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Candidate</td>
+              </tr>
+              <tr style={{ background: '#f0fdf4' }}>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold', color: '#166534' }}>HistGradientBoostingRegressor</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>Optimal</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>Lowest</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>Lowest</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold', color: '#008080' }}>Deployed</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3 style={{ color: '#008080', marginTop: '28px' }}>Input Features & Engineering</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px' }}>
             <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
               <strong>Spårdjup max 15 & 17 (mm):</strong> Lateral rut deformation depth measurements across key tire tracking paths.
@@ -243,7 +298,7 @@ function App() {
               <strong>ÅDT fordon:</strong> Annual Average Daily Traffic volume representing cumulative axle load stress.
             </div>
             <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-              <strong>Pavement Age (`Pavement_Age`):</strong> Derived feature computed dynamically from construction year (`2026 - Beläggningsår`).
+              <strong>Pavement Age (<code style={{ background: '#e2e8f0', padding: '1px 4px', borderRadius: '3px' }}>Pavement_Age</code>):</strong> Derived feature computed dynamically from construction year (<code style={{ background: '#e2e8f0', padding: '1px 4px', borderRadius: '3px' }}>2026 - Beläggningsår</code>).
             </div>
             <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
               <strong>Vägbredd & Hastighetsgräns:</strong> Road width (m) and posted speed limit (km/h) accounting for structural load distribution.
@@ -253,7 +308,7 @@ function App() {
           <h3 style={{ color: '#008080', marginTop: '28px' }}>IRI Condition Thresholds</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
             <thead>
-              <tr style={{ background: '#f1f5f9', textAlignment: 'left' }}>
+              <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
                 <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>IRI Range (mm/m)</th>
                 <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Condition Class</th>
                 <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Interpretation</th>
@@ -282,7 +337,7 @@ function App() {
 
       {/* TAB 4: CLOUD ARCHITECTURE */}
       {activeTab === 'architecture' && (
-        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', lineHeight: '1.6' }}>
+        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', lineHeight: '1.6', textAlign: 'left' }}>
           <h2 style={{ marginTop: '0', color: '#0f172a' }}>System & Infrastructure Architecture</h2>
           <p>
             The production system decouples user interface rendering from high-performance machine learning inference through a RESTful microservice architecture:
@@ -294,11 +349,11 @@ function App() {
             </div>
 
             <div style={{ padding: '16px', borderLeft: '4px solid #0284c7', background: '#f8fafc', borderRadius: '4px' }}>
-              <strong>REST API Layer (AWS EC2):</strong> High-throughput FastAPI application running as a systemd background service on an AWS EC2 instance (`16.192.185.215:8000`). Handles CORS, schema parsing via Pydantic, and request validation.
+              <strong>REST API Layer (AWS EC2):</strong> High-throughput FastAPI application running as a systemd background service on an AWS EC2 instance (<code style={{ background: '#e2e8f0', padding: '1px 4px', borderRadius: '3px' }}>16.192.185.215:8000</code>). Handles CORS, schema parsing via Pydantic, and request validation.
             </div>
 
             <div style={{ padding: '16px', borderLeft: '4px solid #8b5cf6', background: '#f8fafc', borderRadius: '4px' }}>
-              <strong>Machine Learning Pipeline:</strong> Serialized Scikit-Learn/Gradient Boosting artifacts (`artifacts/model.pkl`) trained on preprocessed Trafikverket dataset splits, performing real-time transformation and inference.
+              <strong>Machine Learning Pipeline:</strong> Serialized Scikit-Learn/Gradient Boosting artifacts (<code style={{ background: '#e2e8f0', padding: '1px 4px', borderRadius: '3px' }}>artifacts/model.pkl</code>) trained on preprocessed Trafikverket dataset splits, performing real-time transformation and inference.
             </div>
           </div>
         </div>
