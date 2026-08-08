@@ -231,22 +231,8 @@ function App() {
 
       {/* TAB 3: MODEL & EVALUATION SPECS */}
       {activeTab === 'features' && (
-        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', lineHeight: '1.6', textAlign: 'left' }}>
-          <h2 style={{ marginTop: '0', color: '#0f172a' }}>Modeling Methodology & Performance Evaluation</h2>
-          
-          <h3 style={{ color: '#008080', marginTop: '20px' }}>Modeling Approach</h3>
-          <p>
-            We evaluated multiple regression architectures to capture non-linear degradation patterns across Swedish road networks, including <strong>Random Forest</strong>, <strong>XGBoost</strong>, <strong>LightGBM</strong>, and <strong>HistGradientBoostingRegressor</strong>.
-          </p>
-
-          <h3 style={{ color: '#008080', marginTop: '24px' }}>Performance Metrics (Test Evaluation)</h3>
-          <ul style={{ paddingLeft: '20px', margin: '10px 0' }}>
-            <li style={{ marginBottom: '8px' }}><strong>Goodness-of-Fit (R² Score):</strong> Evaluated across multi-model cross-validation to maximize variance explained in IRI deterioration.</li>
-            <li style={{ marginBottom: '8px' }}><strong>Mean Absolute Error (MAE):</strong> Quantifies average absolute prediction error in real-world IRI units (mm/m).</li>
-            <li style={{ marginBottom: '8px' }}><strong>Root Mean Squared Error (RMSE):</strong> Penalizes larger prediction outliers to ensure safety-critical reliability across severely degraded segments.</li>
-          </ul>
-
-          <h3 style={{ color: '#008080', marginTop: '28px' }}>Model Benchmark Comparison</h3>
+        <>
+       <h3 style={{ color: '#008080', marginTop: '28px' }}>Model Benchmark Comparison</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
             <thead>
               <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
@@ -259,80 +245,63 @@ function App() {
             </thead>
             <tbody>
               <tr>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>Random Forest Regressor</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>Linear Regression (Vanilla)</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>28.1%</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>0.942</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>1.333</td>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Baseline</td>
               </tr>
               <tr>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>XGBoost Regressor</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Candidate</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>Lasso Regression (L1)</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>26.4%</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>0.930</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>1.349</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Baseline</td>
               </tr>
               <tr>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>LightGBM Regressor</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>Ridge Regression (L2)</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>28.1%</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>0.942</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Baseline</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>Gradient Boosting (Baseline)</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>45.6%</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>0.742</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>1.160</td>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>HistGradientBoosting</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>48.5%</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>0.713</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>1.128</td>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>Random Forest (Baseline)</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>49.2%</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>0.700</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>1.121</td>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Evaluated</td>
+              </tr>
+              <tr>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: '600' }}>Gradient Boosting (Tuned)</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>49.4%</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>0.705</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>1.118</td>
                 <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Candidate</td>
               </tr>
               <tr style={{ background: '#f0fdf4' }}>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold', color: '#166534' }}>HistGradientBoostingRegressor</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>Optimal</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>Lowest</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>Lowest</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold', color: '#008080' }}>Deployed</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold', color: '#166534' }}>Random Forest (Tuned)</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>50.7%</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>0.691</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>1.103</td>
+                <td style={{ padding: '10px', border: '1px solid #cbd5e1', fontWeight: 'bold', color: '#008080' }}>Best Model</td>
               </tr>
             </tbody>
           </table>
-
-          <h3 style={{ color: '#008080', marginTop: '28px' }}>Input Features & Engineering</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px' }}>
-            <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-              <strong>Spårdjup max 15 & 17 (mm):</strong> Lateral rut deformation depth measurements across key tire tracking paths.
-            </div>
-            <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-              <strong>ÅDT fordon:</strong> Annual Average Daily Traffic volume representing cumulative axle load stress.
-            </div>
-            <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-              <strong>Pavement Age (<code style={{ background: '#e2e8f0', padding: '1px 4px', borderRadius: '3px' }}>Pavement_Age</code>):</strong> Derived feature computed dynamically from construction year (<code style={{ background: '#e2e8f0', padding: '1px 4px', borderRadius: '3px' }}>2026 - Beläggningsår</code>).
-            </div>
-            <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-              <strong>Vägbredd & Hastighetsgräns:</strong> Road width (m) and posted speed limit (km/h) accounting for structural load distribution.
-            </div>
-          </div>
-
-          <h3 style={{ color: '#008080', marginTop: '28px' }}>IRI Condition Thresholds</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
-            <thead>
-              <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
-                <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>IRI Range (mm/m)</th>
-                <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Condition Class</th>
-                <th style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Interpretation</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>&lt; 1.5 mm/m</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#166534', fontWeight: 'bold' }}>Excellent</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Smooth surface; minimal structural ride impairment.</td>
-              </tr>
-              <tr>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>1.5 – 3.0 mm/m</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#b45309', fontWeight: 'bold' }}>Acceptable</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>Normal operational wear; regular monitoring advised.</td>
-              </tr>
-              <tr>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>&gt; 3.0 mm/m</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#991b1b', fontWeight: 'bold' }}>Poor</td>
-                <td style={{ padding: '10px', border: '1px solid #cbd5e1' }}>High surface roughness; maintenance intervention required.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          </>
       )}
 
       {/* TAB 4: CLOUD ARCHITECTURE */}
