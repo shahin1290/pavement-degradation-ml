@@ -6,7 +6,7 @@ from ml.pipelines.prediction_pipeline import RoadDataInput, PredictionPipeline
 
 class PredictorService:
     def predict_iri(self, request: PredictionRequest):
-        # Pass spardjup_15 instead of spardjup
+        # Use spardjup_15= instead of spardjup=
         road_data = RoadDataInput(
             spardjup_15=request.spardjup,
             spardjup_17=request.spardjup_17,
