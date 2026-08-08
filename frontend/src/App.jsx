@@ -3,7 +3,7 @@ import axios from 'axios';
 
 function App() {
   const [formData, setFormData] = useState({
-    spardjup_15: 4.5,
+    spardjup: 4.5,
     spardjup_17: 5.2,
     vagbredd: 8.5,
     adt_fordon: 3500,
@@ -26,19 +26,27 @@ function App() {
 
     const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
+    // Ensure payload key names match PredictionRequest schema exactly
+    const payload = {
+      spardjup: parseFloat(formData.spardjup),
+      spardjup_17: parseFloat(formData.spardjup_17),
+      vagbredd: parseFloat(formData.vagbredd),
+      adt_fordon: parseInt(formData.adt_fordon, 10),
+      belaggningsar: parseInt(formData.belaggningsar, 10),
+      hastighet: parseInt(formData.hastighet, 10)
+    };
+
     try {
-      // Map form fields to exact JSON keys expected by FastAPI PredictionRequest
-      const response = await axios.post(`${API_BASE_URL}/api/predict`, {
-        "Spårdjup max 15": parseFloat(formData.spardjup_15),
-        "Spårdjup max 17": parseFloat(formData.spardjup_17),
-        "Vägbredd": parseFloat(formData.vagbredd),
-        "ÅDT fordon": parseInt(formData.adt_fordon),
-        "Beläggningsår": parseInt(formData.belaggningsar),
-        "Hastighetsgräns": parseInt(formData.hastighet)
-      });
+      const response = await axios.post(`${API_BASE_URL}/api/predict`, payload);
       setResult(response.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to communicate with FastAPI server.');
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'object') {
+        // Handle array/object validation errors safely for React rendering
+        setError(JSON.stringify(detail));
+      } else {
+        setError(detail || 'Failed to communicate with FastAPI server.');
+      }
     } finally {
       setLoading(false);
     }
@@ -50,7 +58,7 @@ function App() {
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '15px' }}>
           <label style={{ fontWeight: '500' }}>Rut Depth Max 15 (mm): </label>
-          <input type="number" step="0.1" name="spardjup_15" value={formData.spardjup_15} onChange={handleChange} required style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #ccc' }} />
+          <input type="number" step="0.1" name="spardjup" value={formData.spardjup} onChange={handleChange} required style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #ccc' }} />
         </div>
         <div style={{ marginBottom: '15px' }}>
           <label style={{ fontWeight: '500' }}>Rut Depth Max 17 (mm): </label>
@@ -72,12 +80,27 @@ function App() {
           <label style={{ fontWeight: '500' }}>Speed Limit / Hastighetsgräns (km/h): </label>
           <input type="number" name="hastighet" value={formData.hastighet} onChange={handleChange} required style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #ccc' }} />
         </div>
-        <button type="submit" disabled={loading} style={{ width: '100%', padding: '12px', background: '#008080', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }}>
+
+        <button 
+          type="submit" 
+          disabled={loading} 
+          style={{ 
+            width: '100%', 
+            padding: '12px', 
+            background: loading ? '#80cbc4' : '#008080', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '6px', 
+            cursor: loading ? 'not-allowed' : 'pointer', 
+            fontWeight: 'bold', 
+            fontSize: '16px' 
+          }}
+        >
           {loading ? 'Processing Model...' : 'Calculate IRI Prediction'}
         </button>
       </form>
 
-      {error && <div style={{ color: '#d9534f', marginTop: '20px', fontWeight: 'bold' }}>⚠️ Error: {error}</div>}
+      {error && <div style={{ color: '#d9534f', marginTop: '20px', fontWeight: 'bold', wordBreak: 'break-word' }}>⚠️ Error: {error}</div>}
 
       {result && (
         <div style={{ marginTop: '25px', padding: '15px', background: '#f9f9f9', borderRadius: '6px', borderLeft: '6px solid #008080' }}>
