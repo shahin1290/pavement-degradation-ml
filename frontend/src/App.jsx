@@ -5,12 +5,10 @@ function App() {
   const [activeTab, setActiveTab] = useState('predictor');
   
   const [formData, setFormData] = useState({
-    spardjup: 4.5,
-    spardjup_17: 5.2,
-    vagbredd: 8.5,
-    adt_fordon: 3500,
-    belaggningsar: 2021,
-    hastighet: 90
+    sci300: 115.91,
+    aadt: 15140,
+    bells_temp: 28.41172,
+    layer_1_thk: 0.089455
   });
 
   const [result, setResult] = useState(null);
@@ -28,14 +26,13 @@ function App() {
     setResult(null);
 
     const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+    // const API_BASE_URL = 'http://127.0.0.1:8000';
 
     const payload = {
-      spardjup: parseFloat(formData.spardjup),
-      spardjup_17: parseFloat(formData.spardjup_17),
-      vagbredd: parseFloat(formData.vagbredd),
-      adt_fordon: parseInt(formData.adt_fordon, 10),
-      belaggningsar: parseInt(formData.belaggningsar, 10),
-      hastighet: parseInt(formData.hastighet, 10)
+      sci300: parseFloat(formData.sci300),
+      aadt: parseFloat(formData.aadt),
+      bells_temp: parseFloat(formData.bells_temp),
+      layer_1_thk: parseFloat(formData.layer_1_thk)
     };
 
     try {
@@ -58,9 +55,9 @@ function App() {
       
       {/* Header Banner */}
       <header style={{ paddingBottom: '20px', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
-        <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', color: '#0f172a' }}>Trafikverket Road IRI Prediction Dashboard</h1>
+        <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', color: '#0f172a' }}>Trafikverket Structural Pavement AI Dashboard</h1>
         <p style={{ margin: '0', fontSize: '15px', color: '#64748b' }}>
-          Machine Learning Infrastructure for Predictive Pavement Degradation Modeling
+          Machine Learning Infrastructure for Pavement Structural-Response Prediction
         </p>
       </header>
 
@@ -136,88 +133,253 @@ function App() {
       </nav>
 
       {/* TAB 1: LIVE PREDICTOR FORM */}
-      {activeTab === 'predictor' && (
-        <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', textAlign: 'left' }}>
-          <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#0f172a' }}>Evaluate Road Segment Roughness</h2>
-          <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '20px' }}>
-              <div>
-                <label style={{ display: 'block', fontWeight: '600', fontSize: '14px', marginBottom: '6px' }}>Rut Depth Max 15 (mm):</label>
-                <input type="number" step="0.1" name="spardjup" value={formData.spardjup} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-              </div>
+{/* TAB 1: LIVE PREDICTOR FORM */}
+{activeTab === 'predictor' && (
+  <div
+    style={{
+      background: '#ffffff',
+      padding: '30px',
+      borderRadius: '12px',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+      textAlign: 'left'
+    }}
+  >
+    <h2
+      style={{
+        margin: '0 0 20px 0',
+        fontSize: '20px',
+        color: '#0f172a'
+      }}
+    >
+      Evaluate Pavement Structural Response
+    </h2>
 
-              <div>
-                <label style={{ display: 'block', fontWeight: '600', fontSize: '14px', marginBottom: '6px' }}>Rut Depth Max 17 (mm):</label>
-                <input type="number" step="0.1" name="spardjup_17" value={formData.spardjup_17} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-              </div>
+    <form onSubmit={handleSubmit}>
 
-              <div>
-                <label style={{ display: 'block', fontWeight: '600', fontSize: '14px', marginBottom: '6px' }}>Road Width / Vägbredd (m):</label>
-                <input type="number" step="0.1" name="vagbredd" value={formData.vagbredd} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-              </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '18px',
+          marginBottom: '20px'
+        }}
+      >
 
-              <div>
-                <label style={{ display: 'block', fontWeight: '600', fontSize: '14px', marginBottom: '6px' }}>Traffic Volume / ÅDT fordon:</label>
-                <input type="number" name="adt_fordon" value={formData.adt_fordon} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-              </div>
+        {/* SCI300 */}
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontWeight: '600',
+              fontSize: '14px',
+              marginBottom: '6px'
+            }}
+          >
+            SCI300 (TSD structural-response index):
+          </label>
 
-              <div>
-                <label style={{ display: 'block', fontWeight: '600', fontSize: '14px', marginBottom: '6px' }}>Construction Year / Beläggningsår:</label>
-                <input type="number" name="belaggningsar" value={formData.belaggningsar} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontWeight: '600', fontSize: '14px', marginBottom: '6px' }}>Speed Limit / Hastighetsgräns (km/h):</label>
-                <input type="number" name="hastighet" value={formData.hastighet} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '14px',
-                background: loading ? '#80cbc4' : '#008080',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'background 0.2s ease'
-              }}
-            >
-              {loading ? 'Processing Model Inference...' : 'Calculate IRI Prediction'}
-            </button>
-          </form>
-
-          {error && (
-            <div style={{ marginTop: '20px', padding: '12px 16px', background: '#fef2f2', borderLeft: '4px solid #ef4444', color: '#991b1b', borderRadius: '4px', fontSize: '14px' }}>
-              ⚠️ <strong>Error:</strong> {error}
-            </div>
-          )}
-
-          {result && (
-            <div style={{ marginTop: '25px', padding: '20px', background: '#f0fdf4', borderRadius: '8px', borderLeft: '6px solid #008080', border: '1px solid #bbf7d0' }}>
-              <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', color: '#166534' }}>Model Analysis Output</h3>
-              <p style={{ margin: '6px 0', fontSize: '15px' }}>
-                <strong>Predicted IRI Roughness:</strong> <span style={{ fontSize: '18px', color: '#008080', fontWeight: 'bold' }}>{result.predicted_iri} mm/m</span>
-              </p>
-              <p style={{ margin: '6px 0', fontSize: '15px' }}>
-                <strong>Pavement Condition Class:</strong> <span style={{ fontWeight: 'bold' }}>{result.condition}</span>
-              </p>
-            </div>
-          )}
+          <input
+            type="number"
+            step="any"
+            name="sci300"
+            value={formData.sci300}
+            onChange={handleChange}
+            required
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              boxSizing: 'border-box'
+            }}
+          />
         </div>
-      )}
+
+        {/* AADT */}
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontWeight: '600',
+              fontSize: '14px',
+              marginBottom: '6px'
+            }}
+          >
+            AADT (vehicles/day):
+          </label>
+
+          <input
+            type="number"
+            step="any"
+            name="aadt"
+            value={formData.aadt}
+            onChange={handleChange}
+            required
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* BELLS TEMP */}
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontWeight: '600',
+              fontSize: '14px',
+              marginBottom: '6px'
+            }}
+          >
+            Pavement Temperature / BELLS_TEMP (°C):
+          </label>
+
+          <input
+            type="number"
+            step="any"
+            name="bells_temp"
+            value={formData.bells_temp}
+            onChange={handleChange}
+            required
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+        {/* LAYER 1 THICKNESS */}
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontWeight: '600',
+              fontSize: '14px',
+              marginBottom: '6px'
+            }}
+          >
+            Layer 1 Thickness (m):
+          </label>
+
+          <input
+            type="number"
+            step="any"
+            name="layer_1_thk"
+            value={formData.layer_1_thk}
+            onChange={handleChange}
+            required
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+
+      </div>
+
+      {/* SUBMIT BUTTON */}
+      <button
+        type="submit"
+        disabled={loading}
+        style={{
+          width: '100%',
+          padding: '14px',
+          background: loading ? '#80cbc4' : '#008080',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: loading ? 'not-allowed' : 'pointer',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          transition: 'background 0.2s ease'
+        }}
+      >
+        {loading
+          ? 'Processing Structural AI...'
+          : 'Predict D0000'}
+      </button>
+
+    </form>
+
+    {/* ERROR */}
+    {error && (
+      <div
+        style={{
+          marginTop: '20px',
+          padding: '12px 16px',
+          background: '#fef2f2',
+          borderLeft: '4px solid #ef4444',
+          color: '#991b1b',
+          borderRadius: '4px',
+          fontSize: '14px'
+        }}
+      >
+        ⚠️ <strong>Error:</strong> {error}
+      </div>
+    )}
+
+    {/* RESULT */}
+    {result && (
+      <div
+        style={{
+          marginTop: '25px',
+          padding: '20px',
+          background: '#f0fdf4',
+          borderRadius: '8px',
+          borderLeft: '6px solid #008080',
+          border: '1px solid #bbf7d0'
+        }}
+      >
+        <h3
+          style={{
+            margin: '0 0 10px 0',
+            fontSize: '18px',
+            color: '#166534'
+          }}
+        >
+          Model Analysis Output
+        </h3>
+
+        <p
+          style={{
+            margin: '6px 0',
+            fontSize: '15px'
+          }}
+        >
+          <strong>Predicted D0000:</strong>{' '}
+          <span
+            style={{
+              fontSize: '18px',
+              color: '#008080',
+              fontWeight: 'bold'
+            }}
+          >
+            {result.predicted_d0000}
+          </span>
+        </p>
+      </div>
+    )}
+
+  </div>
+)}
 
       {/* TAB 2: PROJECT OVERVIEW */}
       {activeTab === 'overview' && (
         <div style={{ background: '#ffffff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', lineHeight: '1.6', textAlign: 'left' }}>
           <h2 style={{ marginTop: '0', color: '#0f172a' }}>Thesis Project Context & Objectives</h2>
           <p>
-            Maintaining public road networks requires scalable data-driven methodologies to monitor pavement wear and schedule timely repairs. This thesis project focuses on building an operational machine learning pipeline to predict road roughness—quantified by the <strong>International Roughness Index (IRI)</strong>—using Swedish national road data provided by <strong>Trafikverket</strong>.
+            Maintaining public road networks requires scalable data-driven methods to characterize pavement structural response. This thesis prototype focuses on an operational machine learning pipeline that predicts <strong>D0000</strong>, a TSD structural-response variable, using Swedish road data provided by <strong>Trafikverket</strong>.
           </p>
           
           <h3 style={{ color: '#008080', marginTop: '24px' }}>Core Objectives</h3>

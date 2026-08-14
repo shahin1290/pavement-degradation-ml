@@ -2,24 +2,30 @@ from pydantic import BaseModel, Field
 
 
 class PredictionRequest(BaseModel):
-    spardjup: float = Field(
-        ..., description="Rut Depth / Spårdjup max 15 (mm)", example=4.5
+    sci300: float = Field(
+        ...,
+        description="TSD SCI300 structural-response index",
+        example=115.91
     )
-    spardjup_17: float = Field(
-        ..., description="Rut Depth / Spårdjup max 17 (mm)", example=5.2
+
+    aadt: float = Field(
+        ...,
+        description="Average Annual Daily Traffic",
+        example=15140
     )
-    vagbredd: float = Field(..., description="Road Width / Vägbredd (m)", example=8.5)
-    adt_fordon: int = Field(
-        ..., description="Traffic Volume / ÅDT fordon", example=3500
+
+    bells_temp: float = Field(
+        ...,
+        description="Pavement temperature during TSD survey",
+        example=28.41
     )
-    belaggningsar: int = Field(
-        ..., description="Construction Year / Beläggningsår", example=2021
-    )
-    hastighet: int = Field(
-        ..., description="Speed Limit / Hastighetsgräns (km/h)", example=90
+
+    layer_1_thk: float = Field(
+        ...,
+        description="Layer 1 pavement thickness",
+        example=0.089455
     )
 
 
 class PredictionResponse(BaseModel):
-    predicted_iri: float
-    condition: str
+    predicted_d0000: float
