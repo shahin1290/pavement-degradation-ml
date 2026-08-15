@@ -1,0 +1,760 @@
+/* ================================
+   GLOBAL
+================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #222;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+
+/* ================================
+   APP
+================================ */
+
+.app-container {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+
+/* ================================
+   HEADER
+================================ */
+
+.dashboard-header {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dashboard-header h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  color: #0f172a;
+}
+
+.dashboard-header p {
+  margin: 0;
+  font-size: 15px;
+  color: #64748b;
+}
+
+
+/* ================================
+   NAVIGATION
+================================ */
+
+.dashboard-navigation {
+  display: flex;
+  gap: 8px;
+  margin: 24px 0;
+  border-bottom: 2px solid #e2e8f0;
+  overflow-x: auto;
+}
+
+.nav-button {
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-bottom: 3px solid transparent;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.nav-button:hover {
+  color: #008080;
+}
+
+.nav-button.active {
+  border-bottom-color: #008080;
+  color: #008080;
+}
+
+
+/* ================================
+   CARDS
+================================ */
+
+.info-card {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  text-align: left;
+}
+
+.info-card h2 {
+  margin-top: 0;
+  color: #0f172a;
+}
+
+.paragraph {
+  color: #475569;
+  line-height: 1.7;
+}
+
+
+/* ================================
+   PREDICTOR
+================================ */
+
+.predictor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+
+.predict-button {
+  width: 100%;
+  padding: 14px;
+  background: #008080;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.predict-button:disabled {
+  background: #80cbc4;
+  cursor: not-allowed;
+}
+
+.error-box {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  color: #991b1b;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.result-box {
+  margin-top: 25px;
+  padding: 20px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  border-left: 6px solid #008080;
+  border: 1px solid #bbf7d0;
+}
+
+.result-box h3 {
+  margin: 0 0 10px 0;
+  color: #166534;
+}
+
+.prediction-value {
+  font-size: 18px;
+  color: #008080;
+  font-weight: bold;
+}
+
+
+/* ================================
+   INFORMATION
+================================ */
+
+.sub-title {
+  color: #008080;
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+
+.variable-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 15px 18px;
+  margin-bottom: 10px;
+}
+
+.variable-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.variable-symbol {
+  color: #008080;
+  font-weight: 600;
+}
+
+.variable-description {
+  margin-top: 7px;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+
+/* ================================
+   NOTES
+================================ */
+
+.note-box {
+  margin-top: 22px;
+  padding: 15px 18px;
+  background: #fff9e8;
+  border: 1px solid #f1df9b;
+  border-radius: 8px;
+  color: #5f5125;
+}
+
+
+/* ================================
+   TARGET
+================================ */
+
+.target-box {
+  margin-top: 10px;
+  padding: 22px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+}
+
+.target-box h3 {
+  margin-top: 0;
+  color: #166534;
+}
+
+
+/* ================================
+   OBJECTIVE
+================================ */
+
+.objective-box {
+  margin: 20px 0 28px;
+  padding: 22px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+
+.objective-box p {
+  line-height: 1.7;
+}
+
+.diagram {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.diagram-box {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 18px 22px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  line-height: 1.6;
+}
+
+.diagram-content {
+  margin-top: 7px;
+  color: #475569;
+}
+
+.diagram-arrow {
+  font-size: 25px;
+  color: #008080;
+  margin: 8px 0;
+}
+
+.target-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.small-target {
+  min-width: 145px;
+  padding: 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.small-target div {
+  margin-top: 7px;
+  color: #166534;
+  font-weight: 700;
+}
+
+.ai-box {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 22px;
+  border: 2px solid #008080;
+  border-radius: 10px;
+  background: #f0fdfa;
+  line-height: 1.6;
+}
+
+
+/* ================================
+   FORWARD / BACK
+================================ */
+
+.two-column {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.mini-card {
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.big-arrow {
+  text-align: center;
+  font-size: 24px;
+  color: #008080;
+}
+
+
+/* ================================
+   WORK PACKAGES
+================================ */
+
+.wp-card {
+  display: grid;
+  grid-template-columns: 75px 1fr;
+  gap: 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 14px;
+}
+
+.wp-number {
+  font-size: 22px;
+  font-weight: 800;
+  color: #008080;
+}
+
+.wp-card h3 {
+  margin: 0 0 8px 0;
+  color: #0f172a;
+}
+
+.wp-card p {
+  margin: 0;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.wp-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 25px 0;
+}
+
+.flow-box {
+  min-width: 120px;
+  padding: 14px;
+  text-align: center;
+  white-space: pre-line;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 700px) {
+
+  .app-container {
+    margin: 20px auto;
+    padding: 0 12px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 22px;
+  }
+
+  .info-card {
+    padding: 20px;
+  }
+
+  .predictor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wp-card {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+/* ========================================
+   STRUCTURAL AI WORKFLOW
+======================================== */
+
+.structural-workflow {
+  width: 100%;
+  max-width: 900px;
+  margin: 30px auto;
+  text-align: center;
+}
+
+
+/* FIELD DATA */
+
+.workflow-title {
+  display: inline-block;
+
+  padding: 15px 40px;
+
+  background: #0f172a;
+  color: white;
+
+  border-radius: 10px;
+
+  font-size: 20px;
+  font-weight: 700;
+}
+
+
+/* ARROWS */
+
+.workflow-arrow {
+  font-size: 30px;
+  color: #008080;
+  font-weight: 700;
+
+  line-height: 1;
+
+  margin: 14px 0;
+}
+
+
+/* THREE INPUT GROUPS */
+
+.workflow-inputs {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 20px;
+}
+
+
+/* GENERAL WORKFLOW BOX */
+
+.workflow-box {
+  background: #f8fafc;
+
+  border: 2px solid #cbd5e1;
+
+  border-radius: 12px;
+
+  padding: 20px;
+
+  min-height: 155px;
+
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+
+.workflow-box h3 {
+  margin-top: 0;
+  margin-bottom: 14px;
+
+  color: #008080;
+
+  font-size: 18px;
+}
+
+
+.workflow-box p {
+  margin: 7px 0;
+
+  color: #475569;
+
+  font-size: 15px;
+}
+
+
+/* ERAPAVE AND BACK-CALCULATION */
+
+.workflow-main {
+  max-width: 430px;
+
+  margin-left: auto;
+  margin-right: auto;
+
+  background: #f0fdfa;
+
+  border-color: #008080;
+}
+
+
+.workflow-main h3 {
+  font-size: 19px;
+}
+
+
+/* TARGETS */
+
+.workflow-targets {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 20px;
+
+  max-width: 680px;
+
+  margin: 0 auto;
+}
+
+
+.workflow-target {
+  padding: 20px;
+
+  background: #f0fdf4;
+
+  border: 2px solid #bbf7d0;
+
+  border-radius: 12px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+.workflow-target strong {
+  font-size: 23px;
+
+  color: #166534;
+}
+
+
+.workflow-target span {
+  color: #64748b;
+
+  font-size: 14px;
+}
+
+
+/* AI TARGET */
+
+.workflow-ai {
+  max-width: 500px;
+
+  margin: 0 auto;
+
+  padding: 22px;
+
+  background: #008080;
+
+  color: white;
+
+  border-radius: 12px;
+
+  box-shadow:
+    0 6px 15px rgba(0, 128, 128, 0.2);
+}
+
+
+.workflow-ai strong {
+  font-size: 22px;
+}
+
+
+.workflow-ai p {
+  margin-bottom: 0;
+
+  line-height: 1.5;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+  .workflow-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-targets {
+    grid-template-columns: 1fr;
+  }
+
+}
+/* ========================================
+   VARIABLE DEFINITIONS
+======================================== */
+
+.variable-group-title {
+  margin-top: 24px;
+  margin-bottom: 8px;
+
+  color: #334155;
+
+  font-size: 17px;
+}
+
+
+.variable-list {
+  margin-top: 8px;
+  padding-left: 25px;
+
+  color: #475569;
+
+  line-height: 1.75;
+}
+
+
+.variable-list li {
+  margin-bottom: 10px;
+}
+
+
+.variable-list code {
+  padding: 2px 5px;
+
+  background: #f1f5f9;
+
+  border-radius: 4px;
+
+  color: #0f766e;
+
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace;
+
+  font-size: 0.9em;
+}
+
+
+.target-box {
+  margin-top: 20px;
+
+  padding: 24px;
+
+  background: #f0fdf4;
+
+  border: 1px solid #bbf7d0;
+
+  border-radius: 12px;
+}
+
+
+.target-box h3 {
+  margin-top: 0;
+
+  color: #166534;
+}
+
+
+.target-row {
+  display: flex;
+
+  justify-content: center;
+
+  gap: 15px;
+
+  flex-wrap: wrap;
+
+  margin-top: 20px;
+}
+
+
+.definition-target {
+  min-width: 150px;
+
+  padding: 18px;
+
+  background: white;
+
+  border: 1px solid #bbf7d0;
+
+  border-radius: 10px;
+
+  text-align: center;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+
+.definition-target strong {
+  font-size: 22px;
+
+  color: #166534;
+}
+
+
+.definition-target span {
+  color: #64748b;
+
+  font-size: 14px;
+}
