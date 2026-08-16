@@ -35,18 +35,18 @@ function VariableDefinitions() {
       <ul className="variable-list">
 
         <li>
-          <code>Medelförmst_Layer_1_thk</code>
-          {' '}: Thickness of pavement layer 1 (m).
+          <code>Medelförmst_Layer_1_thk</code>:
+          Thickness of pavement layer 1 (m).
         </li>
 
         <li>
-          <code>Medelförmst_Layer_2_thk</code>
-          {' '}: Thickness of pavement layer 2 (m).
+          <code>Medelförmst_Layer_2_thk</code>:
+          Thickness of pavement layer 2 (m).
         </li>
 
         <li>
-          <code>Medelförmst_Layer_3_thk</code>
-          {' '}: Thickness of pavement layer 3 (m).
+          <code>Medelförmst_Layer_3_thk</code>:
+          Thickness of pavement layer 3 (m).
         </li>
 
       </ul>
@@ -62,23 +62,27 @@ function VariableDefinitions() {
 
         <li>
           <code>Medelförtsd_1..4_BELLS_TEMP</code>:
-          {' '}Pavement temperature during the TSD survey (°C),
-          relevant to asphalt stiffness.
+          Pavement temperature during the TSD survey (°C).
         </li>
 
         <li>
           <code>Medelförtsd_1..4_PCIP_14_DAYS</code>:
-          {' '}Precipitation during the preceding 14 days (mm).
+          Precipitation during the preceding 14 days (mm).
         </li>
 
         <li>
-          <code>Förstaförsoil_GJ2_tx / JG2</code>:
-          {' '}Soil/subgrade classification information.
+          <code>Förstaförsoil_JG2</code>:
+          Soil/subgrade classification information.
+        </li>
+
+        <li>
+          <code>Förstaförsoil_GJ2_tx</code>:
+          Text-based soil/subgrade classification information.
         </li>
 
         <li>
           <code>Medelförmst_ditch_depth_10</code>:
-          {' '}Ditch/drainage depth information (m).
+          Ditch/drainage depth information.
         </li>
 
       </ul>
@@ -94,17 +98,17 @@ function VariableDefinitions() {
 
         <li>
           <code>Medelförpmsv4_AADT</code>:
-          {' '}Average Annual Daily Traffic.
+          Average Annual Daily Traffic.
         </li>
 
         <li>
-          <code>TAADT</code>:
-          {' '}Heavy-traffic AADT measure.
+          <code>Medelförpmsv4_TAADT</code>:
+          Heavy-traffic AADT measure.
         </li>
 
         <li>
           <code>Medelförtsd_1..4_SPEED</code>:
-          {' '}TSD survey vehicle speed during NDT measurement (km/h).
+          TSD survey vehicle speed during NDT measurement (km/h).
         </li>
 
       </ul>
@@ -119,27 +123,24 @@ function VariableDefinitions() {
       <ul className="variable-list">
 
         <li>
-          <code>Medelförtsd_1..4_D0000</code>
-          {' '}($d_0$):
-          Central/zero-offset pavement deflection measured
-          by the TSD.
+          <code>Medelförtsd_1..4_D0000</code>:
+          Central pavement deflection measured by the TSD.
         </li>
 
         <li>
-          <code>Medelförtsd_1..4_SCI_300</code>
-          {' '}($SCI_{300}$):
+          <code>Medelförtsd_1..4_SCI_300</code>:
           Surface Curvature Index describing the curvature
           of the pavement deflection response.
         </li>
 
         <li>
-          <code>Medelförtsd_1..4_SCI_sub</code>:
-          {' '}Additional structural-response information.
+          <code>tsd1_SCI_sub ... tsd4_SCI_sub</code>:
+          Substructure-related structural-response indices.
         </li>
 
         <li>
-          <code>Medelförtsd_1..4_SCI300_norm</code>:
-          {' '}Normalized SCI300 structural-response index.
+          <code>Medelförtsd1_SCI300_norm ... Medelförtsd4_SCI300_norm</code>:
+          Normalized SCI300 structural-response indices.
         </li>
 
       </ul>
@@ -167,21 +168,20 @@ function VariableDefinitions() {
           <code>
             Medelförstrain1..4_left_norm
           </code>
+
           {' '}and{' '}
 
           <code>
             Medelförstrain1..4_right_norm
           </code>:
 
-          Normalized structural strain-related variables
-          representing pavement strain response.
+          Normalized structural strain variables.
 
         </li>
 
       </ul>
 
 
- 
       {/* LAYER MODULI */}
 
       <h4 className="variable-group-title">
@@ -191,40 +191,31 @@ function VariableDefinitions() {
       <ul className="variable-list">
 
         <li>
-
           <strong>
             E<sub>AC</sub>
           </strong>:
-          {' '}Stiffness/modulus of the AC or bound pavement layer.
-
+          Stiffness/modulus of the AC or bound pavement layer.
         </li>
 
         <li>
-
           <strong>
             E<sub>base</sub>
           </strong>:
-          {' '}Stiffness/modulus of the granular base layer.
-
+          Stiffness/modulus of the granular base layer.
         </li>
 
         <li>
-
           <strong>
             E<sub>subbase</sub>
           </strong>:
-          {' '}Stiffness/modulus of the subbase layer,
-          when this layer is explicitly represented.
-
+          Stiffness/modulus of the subbase layer.
         </li>
 
         <li>
-
           <strong>
             E<sub>subgrade</sub>
           </strong>:
-          {' '}Stiffness/modulus of the subgrade.
-
+          Stiffness/modulus of the subgrade.
         </li>
 
       </ul>
@@ -237,7 +228,7 @@ function VariableDefinitions() {
         </h3>
 
         <p>
-          The main AI back-calculation targets are the
+          The intended AI back-calculation targets are the
           pavement layer characteristics/moduli obtained
           from analytical back-calculation using ERAPave/MLET.
         </p>
@@ -245,30 +236,41 @@ function VariableDefinitions() {
         <div className="target-row">
 
           <div className="definition-target">
+
             <strong>
               E<sub>AC</sub>
             </strong>
+
             <span>
               AC layer
             </span>
+
           </div>
 
+
           <div className="definition-target">
+
             <strong>
               E<sub>base</sub>
             </strong>
+
             <span>
               Base layer
             </span>
+
           </div>
 
+
           <div className="definition-target">
+
             <strong>
               E<sub>subgrade</sub>
             </strong>
+
             <span>
               Subgrade
             </span>
+
           </div>
 
         </div>
@@ -331,6 +333,403 @@ function VariableDefinitions() {
 
       </ul>
 
+
+      {/* =====================================================
+          4. ML VARIABLE MAPPING — AT THE END
+      ====================================================== */}
+
+      <h3 className="sub-title">
+        ML Variable Mapping
+      </h3>
+
+      <p className="paragraph">
+        The table below summarizes the important variables
+        available in the dataset and their possible role in
+        the planned machine learning back-calculation model.
+      </p>
+
+
+      <div className="ml-table-container">
+
+        <table className="ml-variable-table">
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Variable
+              </th>
+
+              <th>
+                Meaning
+              </th>
+
+              <th>
+                Category
+              </th>
+
+              <th>
+                Possible role
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            {/* TSD */}
+
+            <tr>
+
+              <td>
+                <code>D0000</code>
+              </td>
+
+              <td>
+                Central TSD deflection
+              </td>
+
+              <td>
+                Structural response
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <code>SCI300</code>
+              </td>
+
+              <td>
+                Deflection curvature index
+              </td>
+
+              <td>
+                Structural response
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <code>SCI_sub</code>
+              </td>
+
+              <td>
+                Substructure response
+              </td>
+
+              <td>
+                Structural response
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            {/* STRUCTURE */}
+
+            <tr>
+
+              <td>
+                <code>Layer 1 thickness</code>
+              </td>
+
+              <td>
+                Pavement layer thickness
+              </td>
+
+              <td>
+                Structure
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <code>Layer 2 thickness</code>
+              </td>
+
+              <td>
+                Pavement layer thickness
+              </td>
+
+              <td>
+                Structure
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <code>Layer 3 thickness</code>
+              </td>
+
+              <td>
+                Pavement layer thickness
+              </td>
+
+              <td>
+                Structure
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            {/* ENVIRONMENT */}
+
+            <tr>
+
+              <td>
+                <code>BELLS_TEMP</code>
+              </td>
+
+              <td>
+                Pavement temperature
+              </td>
+
+              <td>
+                Environment
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <code>PCIP_14_DAYS</code>
+              </td>
+
+              <td>
+                14-day precipitation
+              </td>
+
+              <td>
+                Environment / moisture
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <code>Soil</code>
+              </td>
+
+              <td>
+                Subgrade soil information
+              </td>
+
+              <td>
+                Structure / environment
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <code>Ditch depth</code>
+              </td>
+
+              <td>
+                Drainage information
+              </td>
+
+              <td>
+                Environment / drainage
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            {/* TRAFFIC */}
+
+            <tr>
+
+              <td>
+                <code>AADT</code>
+              </td>
+
+              <td>
+                Average Annual Daily Traffic
+              </td>
+
+              <td>
+                Traffic
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <code>TAADT</code>
+              </td>
+
+              <td>
+                Heavy-traffic AADT
+              </td>
+
+              <td>
+                Traffic
+              </td>
+
+              <td className="input-role">
+                Input
+              </td>
+
+            </tr>
+
+
+            {/* TARGETS */}
+
+            <tr>
+
+              <td>
+                <strong>E_AC</strong>
+              </td>
+
+              <td>
+                AC layer modulus
+              </td>
+
+              <td>
+                Layer characteristic
+              </td>
+
+              <td className="target-role">
+                Target
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <strong>E_base</strong>
+              </td>
+
+              <td>
+                Base layer modulus
+              </td>
+
+              <td>
+                Layer characteristic
+              </td>
+
+              <td className="target-role">
+                Target
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <strong>E_subbase</strong>
+              </td>
+
+              <td>
+                Subbase layer modulus
+              </td>
+
+              <td>
+                Layer characteristic
+              </td>
+
+              <td className="target-role">
+                Target
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                <strong>E_subgrade</strong>
+              </td>
+
+              <td>
+                Subgrade modulus
+              </td>
+
+              <td>
+                Layer characteristic
+              </td>
+
+              <td className="target-role">
+                Target
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
 
 
     </section>
