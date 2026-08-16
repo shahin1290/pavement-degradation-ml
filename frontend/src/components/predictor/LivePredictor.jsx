@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import { predictD0000 } from '../../services/api';
 
+
 function LivePredictor() {
 
   const [formData, setFormData] = useState({
@@ -84,13 +85,113 @@ function LivePredictor() {
 
     <section className="info-card">
 
+
+      {/* =====================================================
+          TITLE
+      ====================================================== */}
+
       <h2>
-        Evaluate Pavement Structural Response
+        🔮 Live Predictor — Prototype
       </h2>
+
+
+      {/* =====================================================
+          PURPOSE
+      ====================================================== */}
+
+      <div className="objective-box">
+
+        <h3>
+          Purpose of the Live Predictor
+        </h3>
+
+        <p>
+          This Live Predictor is a prototype used to
+          demonstrate the complete machine learning
+          prediction and deployment workflow.
+        </p>
+
+        <p>
+          The prototype allows pavement-related input
+          variables to be entered through the React
+          interface. The data are sent to the FastAPI
+          backend, which passes the inputs to the trained
+          machine learning model and returns the prediction.
+        </p>
+
+
+        <div className="note-box">
+
+          <strong>
+            Current prototype workflow:
+          </strong>
+
+          <p>
+            React → FastAPI → ML Model → Prediction
+          </p>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          CURRENT PROTOTYPE
+      ====================================================== */}
+
+      <div className="note-box">
+
+        <strong>
+          Current Status:
+        </strong>
+
+        <p>
+          The current predictor is a technical prototype.
+          It is being used to test the connection between
+          the machine learning model, FastAPI backend and
+          React web interface.
+        </p>
+
+        <p>
+          The current D0000 prediction is not the final
+          project target. The final prediction target will
+          be defined after the ERAPave analytical
+          back-calculation data become available.
+        </p>
+
+      </div>
+
+
+      {/* =====================================================
+          INPUT DESCRIPTION
+      ====================================================== */}
+
+      <h3 className="sub-title">
+        Prototype Input Variables
+      </h3>
+
+
+      <p className="paragraph">
+
+        The current prototype uses a small set of pavement
+        variables to demonstrate real-time model prediction.
+
+        The final AI model will use the project-defined
+        input variables and ERAPave/back-calculated targets.
+
+      </p>
+
+
+      {/* =====================================================
+          PREDICTOR FORM
+      ====================================================== */}
 
       <form onSubmit={handleSubmit}>
 
         <div className="predictor-grid">
+
+
+          {/* SCI300 */}
 
           <div className="form-group">
 
@@ -110,6 +211,8 @@ function LivePredictor() {
           </div>
 
 
+          {/* AADT */}
+
           <div className="form-group">
 
             <label>
@@ -127,6 +230,8 @@ function LivePredictor() {
 
           </div>
 
+
+          {/* TEMPERATURE */}
 
           <div className="form-group">
 
@@ -147,6 +252,8 @@ function LivePredictor() {
           </div>
 
 
+          {/* LAYER THICKNESS */}
+
           <div className="form-group">
 
             <label>
@@ -164,33 +271,50 @@ function LivePredictor() {
 
           </div>
 
+
         </div>
 
+
+        {/* =================================================
+            BUTTON
+        ================================================== */}
 
         <button
           type="submit"
           disabled={loading}
           className="predict-button"
         >
+
           {loading
             ? 'Processing Structural AI...'
             : 'Predict D0000'}
+
         </button>
+
 
       </form>
 
+
+      {/* =====================================================
+          ERROR
+      ====================================================== */}
 
       {error && (
 
         <div className="error-box">
 
           ⚠️ <strong>Error:</strong>{' '}
+
           {error}
 
         </div>
 
       )}
 
+
+      {/* =====================================================
+          RESULT
+      ====================================================== */}
 
       {result && (
 
@@ -220,9 +344,77 @@ function LivePredictor() {
 
       )}
 
+
+      {/* =====================================================
+          FINAL PROJECT DIRECTION
+      ====================================================== */}
+
+      <div className="objective-box">
+
+        <h3>
+          Final Project Direction
+        </h3>
+
+        <p>
+          The final AI system is intended to use
+          field and pavement information as inputs
+          and predict pavement layer characteristics
+          obtained from analytical back-calculation.
+        </p>
+
+
+        <div className="note-box">
+
+          <strong>
+            Planned final workflow:
+          </strong>
+
+          <p>
+            TSD + Pavement Structure + Traffic +
+            Environmental Conditions
+          </p>
+
+          <p>
+            ↓
+          </p>
+
+          <p>
+            ERAPave / MLET Back-Calculation
+          </p>
+
+          <p>
+            ↓
+          </p>
+
+          <p>
+            Best-Fitting Layer Characteristics
+          </p>
+
+          <p>
+            ↓
+          </p>
+
+          <p>
+            AI Training
+          </p>
+
+          <p>
+            ↓
+          </p>
+
+          <p>
+            Rapid AI Estimation for New Road Sections
+          </p>
+
+        </div>
+
+      </div>
+
+
     </section>
 
   );
 }
+
 
 export default LivePredictor;
