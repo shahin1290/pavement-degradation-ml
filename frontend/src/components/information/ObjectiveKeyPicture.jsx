@@ -1,338 +1,841 @@
-import React from 'react';
+import React from "react";
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Divider,
+} from "@mui/material";
 
-import DiagramBox from '../common/DiagramBox';
-import SmallTarget from '../common/SmallTarget';
+import {
+  Input,
+  Calculate,
+  CompareArrows,
+  ModelTraining,
+  Memory,
+  Timeline,
+  TrendingUp,
+  CheckCircle,
+} from "@mui/icons-material";
+
+function StageHeader({ number, title, subtitle }) {
+  return (
+    <Box sx={{ mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.2,
+          mb: 0.5,
+        }}
+      >
+        <Box
+          sx={{
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 700,
+            fontSize: "0.9rem",
+            bgcolor: "#1976d2",
+            color: "#fff",
+            flexShrink: 0,
+          }}
+        >
+          {number}
+        </Box>
+
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            color: "#17324d",
+          }}
+        >
+          {title}
+        </Typography>
+      </Box>
+
+      <Typography
+        variant="body2"
+        sx={{
+          color: "#607080",
+          ml: 5.5,
+        }}
+      >
+        {subtitle}
+      </Typography>
+    </Box>
+  );
+}
+
+function FlowArrow({ label }) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: 48,
+        py: 0.5,
+      }}
+    >
+      {label && (
+        <Typography
+          variant="caption"
+          sx={{
+            color: "#607080",
+            fontWeight: 600,
+            mb: 0.2,
+            textAlign: "center",
+          }}
+        >
+          {label}
+        </Typography>
+      )}
+
+      <Box
+        sx={{
+          width: 2,
+          height: 28,
+          bgcolor: "#90a4ae",
+          position: "relative",
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: -1,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 0,
+            height: 0,
+            borderLeft: "6px solid transparent",
+            borderRight: "6px solid transparent",
+            borderTop: "8px solid #90a4ae",
+          }}
+        />
+      </Box>
+    </Box>
+  );
+}
+
+function FlowBox({
+  icon,
+  title,
+  children,
+  background = "#f8fafc",
+  border = "#d8e1e8",
+}) {
+  return (
+    <Card
+      elevation={0}
+      sx={{
+        width: "100%",
+        border: `1px solid ${border}`,
+        borderRadius: 2,
+        background,
+      }}
+    >
+      <CardContent sx={{ p: 2.2, "&:last-child": { pb: 2.2 } }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            mb: 1,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#1976d2",
+            }}
+          >
+            {icon}
+          </Box>
+
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 700,
+              color: "#17324d",
+            }}
+          >
+            {title}
+          </Typography>
+        </Box>
+
+        {children}
+      </CardContent>
+    </Card>
+  );
+}
 
 function ObjectiveKeyPicture() {
   return (
-    <section className="info-card">
-      {/* =====================================================
-          TITLE
-      ====================================================== */}
-      <h2>🎯 Objective & Key Picture</h2>
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: 1200,
+        mx: "auto",
+        px: { xs: 1, md: 2 },
+        py: 3,
+      }}
+    >
+      {/* OBJECTIVE */}
+      <Card
+        elevation={0}
+        sx={{
+          mb: 3,
+          borderRadius: 3,
+          border: "1px solid #d7e3ed",
+          background:
+            "linear-gradient(135deg, #f5f9fd 0%, #ffffff 100%)",
+        }}
+      >
+        <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+          <Typography
+            variant="overline"
+            sx={{
+              color: "#1976d2",
+              fontWeight: 700,
+              letterSpacing: 1.2,
+            }}
+          >
+            PROJECT OBJECTIVE
+          </Typography>
 
-      {/* =====================================================
-          PROJECT OBJECTIVE
-      ====================================================== */}
-      <div className="objective-box">
-        <h3>Project Objective</h3>
-        <p>
-          Develop an AI-based automated analytical back-calculation method to
-          obtain pavement layer characteristics, including properties of AC
-          layers, granular course layers, and the subgrade.
-        </p>
-        <p>
-          The project combines measured TSD structural response with available
-          pavement structure, traffic, and environmental information.
-          Analytical back-calculation (ERAPave/MLET) is used to obtain
-          best-fitting layer characteristics as supervised targets for the
-          machine learning model.
-        </p>
-      </div>
+          <Typography
+            variant="h5"
+            sx={{
+              mt: 0.5,
+              mb: 1.5,
+              fontWeight: 800,
+              color: "#17324d",
+            }}
+          >
+            Develop a data-driven pavement structural Digital Twin
+          </Typography>
 
-      {/* =====================================================
-          KEY PICTURE WORKFLOW
-      ====================================================== */}
-      <h3 className="sub-title">Key Picture Workflow</h3>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "#455a64",
+              lineHeight: 1.7,
+              maxWidth: 1050,
+            }}
+          >
+            The project combines measured TSD data, pavement structure,
+            ERAPave back-calculation and machine learning to estimate
+            pavement layer stiffness. These results are used to establish
+            and update a Digital Twin that can represent the current
+            structural condition of the pavement and support future
+            structural-response prediction and maintenance decisions.
+          </Typography>
+        </CardContent>
+      </Card>
 
-      <div className="diagram">
-        {/* STEP 1: MEASURED FIELD DATA */}
-        <div className="data-input-container">
-          <h3 className="data-input-title">1. MEASURED FIELD DATA (INPUTS)</h3>
+      {/* COMPLETE PROJECT FLOW */}
+      <Card
+        elevation={0}
+        sx={{
+          mb: 3,
+          borderRadius: 3,
+          border: "1px solid #d7e3ed",
+          background: "#ffffff",
+        }}
+      >
+        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 800,
+              color: "#17324d",
+              mb: 0.5,
+            }}
+          >
+            Complete Project Flow
+          </Typography>
 
-          <div className="data-input-grid">
-            <div className="data-input-group">
-              <h4>TSD Deflections</h4>
-              <p>D0000 (Central)</p>
-              <p>SCI300 (Curvature)</p>
-              <p>SCI_sub (Substructure)</p>
-            </div>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "#607080",
+              mb: 3,
+            }}
+          >
+            From measured pavement response to machine learning,
+            Digital Twin updating and future structural prediction.
+          </Typography>
 
-            <div className="data-input-group">
-              <h4>Structure</h4>
-              <p>h1, h2, h3 (Thicknesses)</p>
-              <p>Materials &amp; Soil Type</p>
-            </div>
+          {/* STAGE 1 */}
+          <StageHeader
+            number="1"
+            title="Back-Calculation — Establish Structural State"
+            subtitle="Use measured pavement response to determine layer stiffness through iterative ERAPave calculations."
+          />
 
-            <div className="data-input-group">
-              <h4>Conditions</h4>
-              <p>BELLS_TEMP (Temperature)</p>
-              <p>AADT / TAADT (Traffic)</p>
-              <p>Moisture / PCIP</p>
-            </div>
-          </div>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              maxWidth: 760,
+              mx: "auto",
+            }}
+          >
+            <FlowBox
+              icon={<Input />}
+              title="Known Field Inputs"
+              background="#f8fbff"
+            >
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "1fr 1fr",
+                  },
+                  gap: 1,
+                }}
+              >
+                {[
+                  "h₁, h₂, h₃ — layer thicknesses",
+                  "Loading / wheel load",
+                  "Poisson ratios",
+                  "Measured D0000",
+                  "Measured SCI300",
+                  "Temperature / conditions",
+                ].map((item) => (
+                  <Typography
+                    key={item}
+                    variant="body2"
+                    sx={{
+                      p: 1,
+                      borderRadius: 1,
+                      bgcolor: "#eef5fb",
+                      color: "#455a64",
+                    }}
+                  >
+                    {item}
+                  </Typography>
+                ))}
+              </Box>
+            </FlowBox>
 
-          <p className="diagram-note">
-            Available field measurements and site context used as input features
-            (X) for back-calculation and ML training.
-          </p>
-        </div>
+            <FlowArrow label="Initial trial E₁, MR₂, MR₃, MR₄" />
 
-        <div className="diagram-arrow">↓</div>
+            <FlowBox
+              icon={<Calculate />}
+              title="ERAPave — Forward Calculation"
+              background="#f5faff"
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#455a64",
+                  lineHeight: 1.6,
+                }}
+              >
+                ERAPave receives the pavement geometry, loading conditions
+                and trial layer stiffness values:
+              </Typography>
 
-        {/* STEP 2: ERAPAVE OPTIMIZATION LOOP */}
-        <div className="loop-container border-2 border-dashed border-blue-400 p-4 rounded-lg bg-gray-50">
-          <div className="loop-header text-center font-bold text-blue-800 mb-3">
-            2. ERAPAVE / MLET BACK-CALCULATION LOOP
-          </div>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1,
+                  fontWeight: 700,
+                  color: "#1976d2",
+                  textAlign: "center",
+                }}
+              >
+                E₁, MR₂, MR₃, MR₄ → calculated D0000 and SCI300
+              </Typography>
+            </FlowBox>
 
-          <div className="ai-box mb-2">
-            <strong>Initial Layer Moduli Seeds</strong>
-            <p>
-              Provide initial trial E-values (E_AC, E_base, E_subbase, E_subgrade).
-            </p>
-          </div>
+            <FlowArrow label="Compare" />
 
-          <div className="diagram-arrow">↓</div>
+            <FlowBox
+              icon={<CompareArrows />}
+              title="Compare Calculated vs Measured Response"
+              background="#fffaf2"
+              border="#ead8b4"
+            >
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "1fr 1fr",
+                  },
+                  gap: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    p: 1.2,
+                    borderRadius: 1,
+                    bgcolor: "#fff4dc",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "#795548" }}
+                  >
+                    D0000
+                  </Typography>
 
-          <DiagramBox title="Forward ERAPave / MLET Calculation">
-            Calculate theoretical surface deflection bowl from pavement structure and trial E-values.
-          </DiagramBox>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    Calculated ↔ Measured
+                  </Typography>
+                </Box>
 
-          <div className="diagram-arrow">↓</div>
+                <Box
+                  sx={{
+                    p: 1.2,
+                    borderRadius: 1,
+                    bgcolor: "#fff4dc",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "#795548" }}
+                  >
+                    SCI300
+                  </Typography>
 
-          <DiagramBox title="Compare with Measured TSD Response">
-            Compare calculated deflection bowl against measured TSD values (D0000, SCI300, SCI_sub).
-          </DiagramBox>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    Calculated ↔ Measured
+                  </Typography>
+                </Box>
+              </Box>
+            </FlowBox>
 
-          <div className="diagram-arrow">↓</div>
+            <FlowArrow label="If error is too large → adjust E₁, MR₂, MR₃, MR₄" />
 
-          <div className="decision-box bg-yellow-50 border border-yellow-300 p-3 rounded text-center">
-            <strong>Convergence Check</strong>
-            <p>Is |Calculated Deflection - Measured Deflection| &lt; Tolerance?</p>
-          </div>
+            <FlowBox
+              icon={<CheckCircle />}
+              title="Converged Structural State"
+              background="#f3faf5"
+              border="#c8dfcf"
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#455a64",
+                  lineHeight: 1.6,
+                }}
+              >
+                Iterate until the calculated response agrees with the
+                measured TSD response within the selected tolerance.
+              </Typography>
 
-          <div className="loop-feedback text-sm mt-3 pt-2 border-t flex justify-around">
-            <span className="text-red-600 font-semibold">
-              ❌ NO: Adjust trial E-values → Loop back to ERAPave Simulation
-            </span>
-            <span className="text-green-600 font-semibold">
-              ✅ YES: Optimization Converged
-            </span>
-          </div>
-        </div>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1,
+                  fontWeight: 700,
+                  color: "#2e7d32",
+                  textAlign: "center",
+                }}
+              >
+                E₁, MR₂, MR₃, MR₄ → Back-calculated structural dataset
+              </Typography>
+            </FlowBox>
+          </Box>
 
-        <div className="diagram-arrow">↓</div>
+          <Divider sx={{ my: 4 }} />
 
-        {/* STEP 3: TARGET GENERATION */}
-        <div className="best-fitting-box">
-          <h3>3. BEST-FITTING LAYER PROPERTIES (SUPERVISED TARGETS Y)</h3>
+          {/* STAGE 2 */}
+          <StageHeader
+            number="2"
+            title="TPIS / Machine Learning Model Development"
+            subtitle="Learn the relationship between field observations and the structural stiffness obtained from back-calculation."
+          />
 
-          <div className="target-row">
-            <SmallTarget title="AC Layer" value="E_AC" />
-            <SmallTarget title="Base Layer" value="E_base" />
-            <SmallTarget title="Subbase" value="E_subbase" />
-            <SmallTarget title="Subgrade" value="E_subgrade" />
-          </div>
-        </div>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              maxWidth: 760,
+              mx: "auto",
+            }}
+          >
+            <FlowBox
+              icon={<ModelTraining />}
+              title="Training Dataset"
+              background="#faf7ff"
+              border="#ddd2ec"
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#455a64",
+                  lineHeight: 1.6,
+                }}
+              >
+                Field measurements and pavement information are combined
+                with the E₁, MR₂, MR₃, MR₄ values obtained from Stage 1.
+              </Typography>
 
-        <div className="diagram-arrow">↓</div>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1,
+                  fontWeight: 700,
+                  color: "#6a1b9a",
+                  textAlign: "center",
+                }}
+              >
+                X = field / pavement features
+                <br />
+                Y = E₁, MR₂, MR₃, MR₄
+              </Typography>
+            </FlowBox>
 
-        {/* STEP 4: AI TRAINING */}
-        <div className="ai-box">
-          <strong>4. AI MODEL TRAINING</strong>
-          <p>
-            Machine learning model learns non-linear mapping: <br />
-            Inputs (X: TSD + Structure + Temp + Traffic) ──&gt; Targets (Y: Converged Layer Moduli)
-          </p>
-        </div>
+            <FlowArrow label="Train" />
 
-        <div className="diagram-arrow">↓</div>
+            <FlowBox
+              icon={<ModelTraining />}
+              title="Trained TPIS / ML Model"
+              background="#faf7ff"
+              border="#ddd2ec"
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#455a64",
+                  lineHeight: 1.6,
+                }}
+              >
+                The model learns to estimate pavement layer stiffness
+                directly from available field and structural information,
+                avoiding a full ERAPave back-calculation for every new
+                section.
+              </Typography>
 
-        {/* STEP 5: REAL-TIME DEPLOYMENT */}
-        <div className="best-fitting-box">
-          <h3>5. REAL-TIME AI ESTIMATION (DEPLOYMENT)</h3>
-          <p>
-            New Road Survey Data → <strong>Trained AI Model</strong> →
-            Instantaneous Real-Time Layer Moduli Estimation
-          </p>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1,
+                  fontWeight: 700,
+                  color: "#6a1b9a",
+                  textAlign: "center",
+                }}
+              >
+                New pavement data → ML → estimated E₁, MR₂, MR₃, MR₄
+              </Typography>
+            </FlowBox>
+          </Box>
 
-          <div className="target-row mt-3">
-            <SmallTarget title="AC Layer" value="E_AC" />
-            <SmallTarget title="Base Layer" value="E_base" />
-            <SmallTarget title="Subbase" value="E_subbase" />
-            <SmallTarget title="Subgrade" value="E_subgrade" />
-          </div>
-        </div>
-      </div>
+          <Divider sx={{ my: 4 }} />
 
-      {/* =====================================================
-          DATA USED SUMMARY
-      ====================================================== */}
-      <h3 className="sub-title">Data Used in the Back-Calculation</h3>
+          {/* STAGE 3 */}
+          <StageHeader
+            number="3"
+            title="Digital Twin — State Initialization and Updating"
+            subtitle="Represent the physical pavement digitally and update its structural state when new field observations become available."
+          />
 
-      <div className="two-column">
-        <div className="mini-card">
-          <h3>TSD Structural Response</h3>
-          <p>
-            <strong>D0000</strong>
-            <br />
-            Central TSD deflection
-          </p>
-          <p>
-            <strong>SCI300</strong>
-            <br />
-            Deflection curvature index (d0 - d300)
-          </p>
-          <p>
-            <strong>SCI_sub</strong>
-            <br />
-            Substructure response index
-          </p>
-        </div>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              maxWidth: 900,
+              mx: "auto",
+            }}
+          >
+            <FlowBox
+              icon={<Memory />}
+              title="Digital Twin — Initial Structural State"
+              background="#f3f9f8"
+              border="#c8dfdb"
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#455a64",
+                  lineHeight: 1.6,
+                }}
+              >
+                The Digital Twin is initialized using the structural
+                information obtained from Stage 1 and/or stiffness estimates
+                produced by the trained ML model in Stage 2.
+              </Typography>
 
-        <div className="mini-card">
-          <h3>Pavement Structure</h3>
-          <p>Layer thicknesses (h1, h2, h3)</p>
-          <p>Layer/material specifications</p>
-          <p>Soil / subgrade classification (e.g., JG2)</p>
-        </div>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1,
+                  fontWeight: 700,
+                  color: "#00796b",
+                  textAlign: "center",
+                }}
+              >
+                Digital Twin state = geometry + E₁, MR₂, MR₃, MR₄ + conditions
+              </Typography>
+            </FlowBox>
 
-        <div className="mini-card">
-          <h3>Environmental Conditions</h3>
-          <p>
-            <strong>BELLS_TEMP</strong>
-            <br />
-            Pavement surface/mid-depth temperature
-          </p>
-          <p>Precipitation / 14-day antecedent rainfall (PCIP)</p>
-          <p>Ditch depth &amp; groundwater table conditions</p>
-        </div>
+            <FlowArrow label="New survey / new TSD observation" />
 
-        <div className="mini-card">
-          <h3>Traffic &amp; Loading</h3>
-          <p>
-            <strong>AADT</strong>
-            <br />
-            Average Annual Daily Traffic
-          </p>
-          <p>
-            <strong>TAADT</strong>
-            <br />
-            Heavy-vehicle traffic volume
-          </p>
-          <p>TSD survey vehicle speed (km/h)</p>
-        </div>
-      </div>
+            <FlowBox
+              icon={<Timeline />}
+              title="New Field Observation"
+              background="#f8fbff"
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#455a64",
+                  lineHeight: 1.6,
+                }}
+              >
+                A later TSD survey provides new measured structural
+                responses such as D0000 and SCI300, together with updated
+                pavement and environmental information.
+              </Typography>
+            </FlowBox>
 
-      {/* =====================================================
-          BACK-CALCULATION PROCESS STEPS
-      ====================================================== */}
-      <h3 className="sub-title">Back-Calculation Process Steps</h3>
+            <FlowArrow label="Update the Digital Twin" />
 
-      <div className="strategy-box">
-        <div className="strategy-step">
-          <span className="strategy-number">1</span>
-          <div>
-            <strong>Collect Measured Field Data</strong>
-            <p>
-              Gather TSD deflections, GPR structural layer thicknesses, soil
-              type, climate, and traffic information.
-            </p>
-          </div>
-        </div>
+            <Box
+              sx={{
+                width: "100%",
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "1fr 1fr",
+                },
+                gap: 2,
+              }}
+            >
+              <FlowBox
+                icon={<Calculate />}
+                title="Option A — ERAPave Iterative Updating"
+                background="#fffaf2"
+                border="#ead8b4"
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#455a64",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Use the previous Digital Twin state as the starting
+                  stiffness estimate. Run ERAPave forward, compare the
+                  calculated response with the new TSD response, and
+                  iteratively adjust E₁, MR₂, MR₃, MR₄.
+                </Typography>
 
-        <div className="strategy-step">
-          <span className="strategy-number">2</span>
-          <div>
-            <strong>Initialize Seed Layer Properties</strong>
-            <p>
-              Set initial trial stiffness values (E-moduli) for the asphalt,
-              granular base, subbase, and subgrade layers.
-            </p>
-          </div>
-        </div>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 1.2,
+                    fontWeight: 700,
+                    color: "#8d6e00",
+                    textAlign: "center",
+                  }}
+                >
+                  New TSD → ERAPave → adjust E₁, MR₂, MR₃, MR₄ → agreement
+                </Typography>
+              </FlowBox>
 
-        <div className="strategy-step">
-          <span className="strategy-number">3</span>
-          <div>
-            <strong>ERAPave / MLET Calculation</strong>
-            <p>
-              Compute theoretical structural stress-strain response and surface
-              deflections using Multi-Layer Elastic Theory.
-            </p>
-          </div>
-        </div>
+              <FlowBox
+                icon={<ModelTraining />}
+                title="Option B — ML-Based DT Updating"
+                background="#faf7ff"
+                border="#ddd2ec"
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#455a64",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Use the trained ML/TPIS model to estimate the new
+                  structural state directly from the new field data.
+                  The estimated E₁, MR₂, MR₃, MR₄ values are then used to update the
+                  Digital Twin.
+                </Typography>
 
-        <div className="strategy-step">
-          <span className="strategy-number">4</span>
-          <div>
-            <strong>Compare with Measured TSD Response</strong>
-            <p>
-              Calculate absolute error between ERAPave deflections and measured
-              TSD values (D0000, SCI300).
-            </p>
-          </div>
-        </div>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 1.2,
+                    fontWeight: 700,
+                    color: "#6a1b9a",
+                    textAlign: "center",
+                  }}
+                >
+                  New TSD → ML → new E₁, MR₂, MR₃, MR₄ → update DT
+                </Typography>
+              </FlowBox>
+            </Box>
 
-        <div className="strategy-step">
-          <span className="strategy-number">5</span>
-          <div>
-            <strong>Adjust Unknown Layer Properties</strong>
-            <p>
-              Modify trial layer moduli (E-values) using non-linear
-              optimization algorithms to minimize deflection residuals.
-            </p>
-          </div>
-        </div>
+            <FlowArrow label="Updated structural state" />
 
-        <div className="strategy-step">
-          <span className="strategy-number">6</span>
-          <div>
-            <strong>Iterate Until Convergence</strong>
-            <p>
-              Repeat ERAPave calculations and comparisons until the deflection
-              error drops below the acceptable threshold (&lt; 1%).
-            </p>
-          </div>
-        </div>
+            <FlowBox
+              icon={<Memory />}
+              title="Updated Digital Twin"
+              background="#f3f9f8"
+              border="#c8dfdb"
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#455a64",
+                  lineHeight: 1.6,
+                }}
+              >
+                The Digital Twin now represents the latest estimated
+                structural condition of the physical pavement.
+              </Typography>
 
-        <div className="strategy-step">
-          <span className="strategy-number">7</span>
-          <div>
-            <strong>Extract Target Labels &amp; Train AI</strong>
-            <p>
-              Save best-fitting layer moduli (E_AC, E_base, E_subbase, E_subgrade)
-              as supervised target labels (Y) to train the machine learning
-              model.
-            </p>
-          </div>
-        </div>
-      </div>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1,
+                  fontWeight: 700,
+                  color: "#00796b",
+                  textAlign: "center",
+                }}
+              >
+                Updated E₁, MR₂, MR₃, MR₄ + pavement state + environmental conditions
+              </Typography>
+            </FlowBox>
+          </Box>
 
-      {/* =====================================================
-          ROLE OF AI
-      ====================================================== */}
-      <h3 className="sub-title">Role of AI in Real-Time Deployment</h3>
+          <Divider sx={{ my: 4 }} />
 
-      <div className="objective-box">
-        <h3>From Iterative Back-Calculation to Real-Time AI Inference</h3>
-        <p>
-          Analytical back-calculation using ERAPave provides accurate,
-          physics-validated layer characteristics (E_AC, E_base, E_subgrade)
-          for the training dataset.
-        </p>
-        <p>
-          These layer characteristics serve as supervised targets (Y) for the
-          machine learning model, while TSD deflections, structure, traffic,
-          and environmental variables form the input feature matrix (X).
-        </p>
-        <p>
-          After training, the AI model replaces the slow, iterative ERAPave solver,
-          enabling instantaneous, real-time estimation of pavement layer
-          moduli across large road networks.
-        </p>
-      </div>
+          {/* STAGE 4 */}
+          <StageHeader
+            number="4"
+            title="Future Prediction and Decision Support"
+            subtitle="Use the updated Digital Twin to understand future pavement structural behaviour and support maintenance planning."
+          />
 
-      {/* =====================================================
-          SUMMARY NOTE
-      ====================================================== */}
-      <div className="note-box">
-        <strong>
-          Methodological Pipeline Summary: Measured Field Data → ERAPave Optimization → AI Supervised Targets → Real-Time Digital Twin Inference
-        </strong>
-      </div>
-    </section>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              maxWidth: 760,
+              mx: "auto",
+            }}
+          >
+            <FlowBox
+              icon={<TrendingUp />}
+              title="Forward Prediction"
+              background="#f5faff"
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#455a64",
+                  lineHeight: 1.6,
+                }}
+              >
+                The updated Digital Twin can be evaluated under future
+                traffic, temperature and environmental scenarios to
+                estimate future structural response.
+              </Typography>
+
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1,
+                  fontWeight: 700,
+                  color: "#1976d2",
+                  textAlign: "center",
+                }}
+              >
+                Updated DT + future conditions → predicted response
+              </Typography>
+            </FlowBox>
+
+            <FlowArrow label="Evaluate deterioration / condition" />
+
+            <FlowBox
+              icon={<CheckCircle />}
+              title="Maintenance & Decision Support"
+              background="#f3faf5"
+              border="#c8dfcf"
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#455a64",
+                  lineHeight: 1.6,
+                }}
+              >
+                Predicted structural response and deterioration trends can
+                support identification of sections that may require
+                further investigation, maintenance or rehabilitation.
+              </Typography>
+            </FlowBox>
+          </Box>
+
+          {/* SUMMARY */}
+          <Box
+            sx={{
+              mt: 4,
+              p: 2.5,
+              borderRadius: 2,
+              bgcolor: "#f5f7fa",
+              border: "1px solid #e0e6eb",
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 800,
+                color: "#17324d",
+                mb: 1,
+              }}
+            >
+              Overall Logic
+            </Typography>
+
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#455a64",
+                lineHeight: 1.8,
+                textAlign: "center",
+                fontWeight: 600,
+              }}
+            >
+              Field Data
+              {" → "}
+              ERAPave Back-Calculation
+              {" → "}
+              E₁, MR₂, MR₃, MR₄ Dataset
+              {" → "}
+              TPIS / ML
+              {" → "}
+              Digital Twin
+              {" → "}
+              DT Updating
+              {" → "}
+              Future Prediction
+              {" → "}
+              Maintenance Decision
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
 
