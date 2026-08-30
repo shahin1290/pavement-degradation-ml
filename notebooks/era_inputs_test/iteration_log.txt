@@ -1,0 +1,153 @@
+ERAPave ONE-ROW ITERATION LOG
+Connecting to ERAPave...
+Connected to ERAPave.
+
+========================================
+BACK-CALCULATION
+========================================
+h1 = 8.19 cm
+h2 = 11.24 cm
+h3 = 99.13 cm
+Temperature = 29.28 °C
+Target D0000 = 418.99 µm
+Target SCI300 = 187.93 µm
+
+----------------------------------------
+ITERATION 1
+----------------------------------------
+E1  = 3500.0 MPa
+MR2 = 250.0 MPa
+MR3 = 130.0 MPa
+MR4 = 40.0 MPa
+STEP 1: Creating DAT...
+STEP 1: DAT created.
+STEP 2: Opening File menu...
+STEP 3: Selecting Open...
+Waiting for Open dialog...
+Open dialog found.
+Filename box found.
+DAT path entered.
+DAT file submitted.
+DAT file opened.
+STEP 6: Running ERAPave calculation...
+ERAPave calculation finished.
+STEP 7: Opening Save Results...
+Waiting for Save dialog...
+Save dialog found.
+Output path entered.
+Save command submitted.
+Result saved.
+STEP 9: Waiting for result file...
+Result file ready.
+STEP 10: Reading ERAPave result...
+Calculated D0000 = 454.60 µm
+Calculated SCI300 = 183.00 µm
+D0000 error = 8.50%
+SCI300 error = 2.62%
+Updating MR4...
+Updating E1...
+Updated values:
+E1  = 3454.1 MPa
+MR2 = 250.0 MPa
+MR3 = 130.0 MPa
+MR4 = 41.7 MPa
+
+----------------------------------------
+ITERATION 2
+----------------------------------------
+E1  = 3454.1 MPa
+MR2 = 250.0 MPa
+MR3 = 130.0 MPa
+MR4 = 41.7 MPa
+STEP 1: Creating DAT...
+STEP 1: DAT created.
+STEP 2: Opening File menu...
+STEP 3: Selecting Open...
+Waiting for Open dialog...
+Open dialog found.
+Filename box found.
+DAT path entered.
+DAT file submitted.
+DAT file opened.
+STEP 6: Running ERAPave calculation...
+ERAPave calculation finished.
+STEP 7: Opening Save Results...
+Waiting for Save dialog...
+Save dialog found.
+Output path entered.
+Save command submitted.
+Result saved.
+STEP 9: Waiting for result file...
+Result file ready.
+STEP 10: Reading ERAPave result...
+Calculated D0000 = 451.10 µm
+Calculated SCI300 = 184.00 µm
+D0000 error = 7.66%
+SCI300 error = 2.09%
+Updating MR4...
+Updating E1...
+Updated values:
+E1  = 3418.0 MPa
+MR2 = 250.0 MPa
+MR3 = 130.0 MPa
+MR4 = 43.3 MPa
+
+----------------------------------------
+ITERATION 3
+----------------------------------------
+E1  = 3418.0 MPa
+MR2 = 250.0 MPa
+MR3 = 130.0 MPa
+MR4 = 43.3 MPa
+STEP 1: Creating DAT...
+STEP 1: DAT created.
+STEP 2: Opening File menu...
+STEP 3: Selecting Open...
+Waiting for Open dialog...
+Open dialog found.
+Filename box found.
+DAT path entered.
+DAT file submitted.
+DAT file opened.
+STEP 6: Running ERAPave calculation...
+ERAPave calculation finished.
+STEP 7: Opening Save Results...
+Waiting for Save dialog...
+Save dialog found.
+Output path entered.
+Save command submitted.
+Result saved.
+STEP 9: Waiting for result file...
+Result file ready.
+STEP 10: Reading ERAPave result...
+Calculated D0000 = 447.90 µm
+Calculated SCI300 = 184.80 µm
+D0000 error = 6.90%
+SCI300 error = 1.67%
+Updating MR4...
+Updating E1...
+Updated values:
+E1  = 3389.5 MPa
+MR2 = 250.0 MPa
+MR3 = 130.0 MPa
+MR4 = 44.8 MPa
+
+========================================
+FINAL RESULT
+========================================
+Status = NOT CONVERGED
+
+Final E1  = 3389.5 MPa
+Final MR2 = 250.0 MPa
+Final MR3 = 130.0 MPa
+Final MR4 = 44.8 MPa
+
+Last D0000 = 447.90 µm
+Target D0000 = 418.99 µm
+
+Last SCI300 = 184.80 µm
+Target SCI300 = 187.93 µm
+
+========================================
+ONE-ROW ITERATIVE TEST FINISHED
+========================================
