@@ -24,8 +24,6 @@ wheels/
 # Datasets (raw + processed)
 data/
 
-# ML Artifacts (Trained models, split CSVs, generated plots)
-artifacts/
 
 # MLflow experiment tracking
 mlruns/
