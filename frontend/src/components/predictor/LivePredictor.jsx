@@ -1,245 +1,138 @@
 import React, { useState } from 'react';
-
-import { predictD0000 } from '../../services/api';
-
+import { predictModuli } from '../../services/api';
 
 function LivePredictor() {
-
   const [formData, setFormData] = useState({
-    sci300: 115.91,
-    aadt: 15140,
-    bells_temp: 28.41172,
-    layer_1_thk: 0.089455
+    h1_cm: 18.75,
+    h2_cm: 33.0,
+    h3_cm: 70.72,
+    bells_temp: 20.81,
+    d0_target: 298.02,
+    sci300_target: 104.92
   });
 
   const [result, setResult] = useState(null);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState(null);
-
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
-
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
-
   };
 
-
   const handleSubmit = async (e) => {
-
     e.preventDefault();
-
     setLoading(true);
     setError(null);
     setResult(null);
 
     const payload = {
-      sci300: parseFloat(formData.sci300),
-      aadt: parseFloat(formData.aadt),
+      h1_cm: parseFloat(formData.h1_cm),
+      h2_cm: parseFloat(formData.h2_cm),
+      h3_cm: parseFloat(formData.h3_cm),
       bells_temp: parseFloat(formData.bells_temp),
-      layer_1_thk: parseFloat(formData.layer_1_thk)
+      d0_target: parseFloat(formData.d0_target),
+      sci300_target: parseFloat(formData.sci300_target)
     };
 
     try {
-
-      const data =
-        await predictD0000(payload);
-
+      const data = await predictModuli(payload);
       setResult(data);
-
     } catch (err) {
-
-      const detail =
-        err.response?.data?.detail;
-
+      const detail = err.response?.data?.detail;
       if (typeof detail === 'object') {
-
-        setError(
-          JSON.stringify(detail)
-        );
-
+        setError(JSON.stringify(detail));
       } else {
-
         setError(
-          detail ||
-          'Failed to communicate with FastAPI server.'
+          detail || 'Failed to communicate with FastAPI server.'
         );
-
       }
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
-
   return (
-
     <section className="info-card">
-
-
-      {/* =====================================================
-          TITLE
-      ====================================================== */}
-
+      {/* TITLE */}
       <h2>
-        🔮 Live Predictor — Prototype
+        🔮 Live Predictor — 4-Layer Moduli Surrogate
       </h2>
 
-
-      {/* =====================================================
-          PURPOSE
-      ====================================================== */}
-
+      {/* PURPOSE */}
       <div className="objective-box">
-
-        <h3>
-          Purpose of the Live Predictor
-        </h3>
-
+        <h3>Purpose of the Live Predictor</h3>
         <p>
-          This Live Predictor is a prototype used to
-          demonstrate the complete machine learning
-          prediction and deployment workflow.
+          This Live Predictor demonstrates the integrated machine learning 
+          prediction pipeline for structural pavement back-calculation.
         </p>
-
         <p>
-          The prototype allows pavement-related input
-          variables to be entered through the React
-          interface. The data are sent to the FastAPI
-          backend, which passes the inputs to the trained
-          machine learning model and returns the prediction.
+          The interface takes structural and environmental inputs, sends them 
+          to the deployed FastAPI backend, and retrieves the predicted moduli 
+          ($E_1$–$E_4$) in real time.
         </p>
-
-
         <div className="note-box">
-
-          <strong>
-            Current prototype workflow:
-          </strong>
-
-          <p>
-            React → FastAPI → ML Model → Prediction
-          </p>
-
+          <strong>Current workflow:</strong>
+          <p>React → FastAPI (Render) → Random Forest Surrogate → $E_1$–$E_4$ Moduli</p>
         </div>
-
       </div>
 
-
-      {/* =====================================================
-          CURRENT PROTOTYPE
-      ====================================================== */}
-
-      <div className="note-box">
-
-        <strong>
-          Current Status:
-        </strong>
-
-        <p>
-          The current predictor is a technical prototype.
-          It is being used to test the connection between
-          the machine learning model, FastAPI backend and
-          React web interface.
-        </p>
-
-        <p>
-          The current D0000 prediction is not the final
-          project target. The final prediction target will
-          be defined after the ERAPave analytical
-          back-calculation data become available.
-        </p>
-
-      </div>
-
-
-      {/* =====================================================
-          INPUT DESCRIPTION
-      ====================================================== */}
-
+      {/* INPUT DESCRIPTION */}
       <h3 className="sub-title">
-        Prototype Input Variables
+        Surrogate Model Input Features
       </h3>
-
-
       <p className="paragraph">
-
-        The current prototype uses a small set of pavement
-        variables to demonstrate real-time model prediction.
-
-        The final AI model will use the project-defined
-        input variables and ERAPave/back-calculated targets.
-
+        Enter the structural layer thicknesses, pavement temperature, and target 
+        deflection responses to estimate layer moduli.
       </p>
 
-
-      {/* =====================================================
-          PREDICTOR FORM
-      ====================================================== */}
-
+      {/* PREDICTOR FORM */}
       <form onSubmit={handleSubmit}>
-
         <div className="predictor-grid">
-
-
-          {/* SCI300 */}
-
+          {/* H1 */}
           <div className="form-group">
-
-            <label>
-              SCI300 (TSD structural-response index):
-            </label>
-
+            <label>Layer 1 Thickness (h1_cm):</label>
             <input
               type="number"
               step="any"
-              name="sci300"
-              value={formData.sci300}
+              name="h1_cm"
+              value={formData.h1_cm}
               onChange={handleChange}
               required
             />
-
           </div>
 
-
-          {/* AADT */}
-
+          {/* H2 */}
           <div className="form-group">
-
-            <label>
-              AADT (vehicles/day):
-            </label>
-
+            <label>Layer 2 Thickness (h2_cm):</label>
             <input
               type="number"
               step="any"
-              name="aadt"
-              value={formData.aadt}
+              name="h2_cm"
+              value={formData.h2_cm}
               onChange={handleChange}
               required
             />
-
           </div>
 
-
-          {/* TEMPERATURE */}
-
+          {/* H3 */}
           <div className="form-group">
+            <label>Layer 3 Thickness (h3_cm):</label>
+            <input
+              type="number"
+              step="any"
+              name="h3_cm"
+              value={formData.h3_cm}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            <label>
-              Pavement Temperature /
-              BELLS_TEMP (°C):
-            </label>
-
+          {/* BELLS TEMP */}
+          <div className="form-group">
+            <label>Pavement Temperature (bells_temp °C):</label>
             <input
               type="number"
               step="any"
@@ -248,173 +141,84 @@ function LivePredictor() {
               onChange={handleChange}
               required
             />
-
           </div>
 
-
-          {/* LAYER THICKNESS */}
-
+          {/* D0 TARGET */}
           <div className="form-group">
-
-            <label>
-              Layer 1 Thickness (m):
-            </label>
-
+            <label>Target Deflection D0 (um):</label>
             <input
               type="number"
               step="any"
-              name="layer_1_thk"
-              value={formData.layer_1_thk}
+              name="d0_target"
+              value={formData.d0_target}
               onChange={handleChange}
               required
             />
-
           </div>
 
-
+          {/* SCI300 TARGET */}
+          <div className="form-group">
+            <label>Target SCI300 (um):</label>
+            <input
+              type="number"
+              step="any"
+              name="sci300_target"
+              value={formData.sci300_target}
+              onChange={handleChange}
+              required
+            />
+          </div>
         </div>
 
-
-        {/* =================================================
-            BUTTON
-        ================================================== */}
-
+        {/* BUTTON */}
         <button
           type="submit"
           disabled={loading}
           className="predict-button"
         >
-
-          {loading
-            ? 'Processing Structural AI...'
-            : 'Predict D0000'}
-
+          {loading ? 'Calculating Moduli...' : 'Predict Layer Moduli'}
         </button>
-
-
       </form>
 
-
-      {/* =====================================================
-          ERROR
-      ====================================================== */}
-
+      {/* ERROR */}
       {error && (
-
         <div className="error-box">
-
-          ⚠️ <strong>Error:</strong>{' '}
-
-          {error}
-
+          ⚠️ <strong>Error:</strong> {error}
         </div>
-
       )}
 
-
-      {/* =====================================================
-          RESULT
-      ====================================================== */}
-
+      {/* RESULT */}
       {result && (
-
         <div className="result-box">
-
-          <h3>
-            Model Analysis Output
-          </h3>
-
+          <h3>Predicted Pavement Moduli</h3>
           <p>
-
-            <strong>
-              Predicted D0000:
-            </strong>{' '}
-
+            <strong>E1 (Asphalt Layer):</strong>{' '}
             <span className="prediction-value">
-
-              {Number(
-                result.predicted_d0000
-              ).toFixed(2)}
-
+              {Number(result.E1_Asphalt_MPa).toFixed(2)} MPa
             </span>
-
           </p>
-
+          <p>
+            <strong>E2 (Base Layer):</strong>{' '}
+            <span className="prediction-value">
+              {Number(result.E2_Base_MPa).toFixed(2)} MPa
+            </span>
+          </p>
+          <p>
+            <strong>E3 (Subbase Layer):</strong>{' '}
+            <span className="prediction-value">
+              {Number(result.E3_Subbase_MPa).toFixed(2)} MPa
+            </span>
+          </p>
+          <p>
+            <strong>E4 (Subgrade):</strong>{' '}
+            <span className="prediction-value">
+              {Number(result.E4_Subgrade_MPa).toFixed(2)} MPa
+            </span>
+          </p>
         </div>
-
       )}
-
-
-      {/* =====================================================
-          FINAL PROJECT DIRECTION
-      ====================================================== */}
-
-      <div className="objective-box">
-
-        <h3>
-          Final Project Direction
-        </h3>
-
-        <p>
-          The final AI system is intended to use
-          field and pavement information as inputs
-          and predict pavement layer characteristics
-          obtained from analytical back-calculation.
-        </p>
-
-
-        <div className="note-box">
-
-          <strong>
-            Planned final workflow:
-          </strong>
-
-          <p>
-            TSD + Pavement Structure + Traffic +
-            Environmental Conditions
-          </p>
-
-          <p>
-            ↓
-          </p>
-
-          <p>
-            ERAPave / MLET Back-Calculation
-          </p>
-
-          <p>
-            ↓
-          </p>
-
-          <p>
-            Best-Fitting Layer Characteristics
-          </p>
-
-          <p>
-            ↓
-          </p>
-
-          <p>
-            AI Training
-          </p>
-
-          <p>
-            ↓
-          </p>
-
-          <p>
-            Rapid AI Estimation for New Road Sections
-          </p>
-
-        </div>
-
-      </div>
-
-
     </section>
-
   );
 }
-
 
 export default LivePredictor;
