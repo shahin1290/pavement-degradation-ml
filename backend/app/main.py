@@ -41,7 +41,7 @@ def health_check():
 
 
 # --------------------------------------------------
-# D0000 prediction
+# Pavement Moduli Prediction (E1 - E4)
 # --------------------------------------------------
 
 @app.post(
@@ -51,13 +51,14 @@ def health_check():
 def predict(request: PredictionRequest):
 
     try:
-
-        predicted_d0000 = (
-            predictor_service.predict_d0000(request)
-        )
+        # Call the updated predictor service method for 4-layer moduli
+        predictions = predictor_service.predict_moduli(request)
 
         return PredictionResponse(
-            predicted_d0000=predicted_d0000
+            E1_Asphalt_MPa=predictions[0],
+            E2_Base_MPa=predictions[1],
+            E3_Subbase_MPa=predictions[2],
+            E4_Subgrade_MPa=predictions[3]
         )
 
     except Exception as e:

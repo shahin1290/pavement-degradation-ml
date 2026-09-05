@@ -2,30 +2,40 @@ from pydantic import BaseModel, Field
 
 
 class PredictionRequest(BaseModel):
-    sci300: float = Field(
+    h1_cm: float = Field(
         ...,
-        description="TSD SCI300 structural-response index",
-        example=115.91
+        description="Layer 1 (Asphalt) thickness in cm",
+        example=18.75
     )
-
-    aadt: float = Field(
+    h2_cm: float = Field(
         ...,
-        description="Average Annual Daily Traffic",
-        example=15140
+        description="Layer 2 (Base) thickness in cm",
+        example=33.0
     )
-
+    h3_cm: float = Field(
+        ...,
+        description="Layer 3 (Subbase) thickness in cm",
+        example=70.72
+    )
     bells_temp: float = Field(
         ...,
-        description="Pavement temperature during TSD survey",
-        example=28.41
+        description="Pavement temperature during survey (BELLS_TEMP)",
+        example=20.81
     )
-
-    layer_1_thk: float = Field(
+    d0_target: float = Field(
         ...,
-        description="Layer 1 pavement thickness",
-        example=0.089455
+        description="Target peak deflection D0 (um)",
+        example=298.02
+    )
+    sci300_target: float = Field(
+        ...,
+        description="Target Surface Curvature Index SCI300 (um)",
+        example=104.92
     )
 
 
 class PredictionResponse(BaseModel):
-    predicted_d0000: float
+    E1_Asphalt_MPa: float = Field(..., description="Predicted Asphalt Layer Modulus")
+    E2_Base_MPa: float = Field(..., description="Predicted Base Layer Modulus")
+    E3_Subbase_MPa: float = Field(..., description="Predicted Subbase Layer Modulus")
+    E4_Subgrade_MPa: float = Field(..., description="Predicted Subgrade Modulus")

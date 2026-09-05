@@ -37,4 +37,4 @@ class TrainingPipeline:
 
 if __name__ == "__main__":
     pipeline = TrainingPipeline()
-    pipeline.run_pipeline("data/structural-ai-data.xlsx")
+    pipeline.run_pipeline("data/results_log_50.csv")

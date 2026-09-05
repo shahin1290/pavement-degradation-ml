@@ -9,23 +9,22 @@ class DataTransformation:
             test_df = pd.read_csv(test_path)
 
             features = [
-                "Medelförtsd_1_SCI_300",
-                "Medelförpmsv4_AADT",
-                "Medelförtsd_1_BELLS_TEMP",
-                "Medelförmst_Layer_1_thk",
+                "h1_cm",
+                "h2_cm",
+                "h3_cm",
+                "bells_temp",
+                "d0_target",
+                "sci300_target",
             ]
-            target = "Medelförtsd_1_D0000"
-
-            train_df = train_df[features + [target]].dropna()
-            test_df = test_df[features + [target]].dropna()
+            targets = ["E1_MPa", "E2_MPa", "E3_MPa", "E4_MPa"]
 
             X_train = train_df[features]
-            y_train = train_df[target]
+            y_train = train_df[targets]
             X_test = test_df[features]
-            y_test = test_df[target]
+            y_test = test_df[targets]
 
             logging.info(f"Features: {features}")
-            logging.info(f"Target: {target}")
+            logging.info(f"Targets: {targets}")
             logging.info(f"Training samples: {len(X_train)}")
             logging.info(f"Test samples: {len(X_test)}")
 
