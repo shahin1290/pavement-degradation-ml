@@ -22,8 +22,7 @@ wheels/
 # ==========================================
 
 # Datasets (raw + processed)
-data/
-
+ /data/
 
 # MLflow experiment tracking
 mlruns/
