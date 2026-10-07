@@ -1,8 +1,13 @@
 // All communication with the FastAPI backend.
-// The backend address comes from the environment variable VITE_API_URL
-// (set it in a .env file locally and in the Vercel project settings).
+// Backend address: VITE_API_URL if set (in .env locally or in the Vercel project settings),
+// otherwise the Render backend for the deployed site and the local backend for `npm run dev`.
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+const PRODUCTION_API = 'https://pavement-degradation-ml.onrender.com';
+const LOCAL_API = 'http://127.0.0.1:8000';
+
+const API_URL = (
+  import.meta.env.VITE_API_URL || (import.meta.env.PROD ? PRODUCTION_API : LOCAL_API)
+).replace(/\/$/, '');
 
 // Turn FastAPI error responses into one readable message
 function errorMessage(body, status) {
