@@ -1,28 +1,45 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, Chip, CircularProgress, Paper, Stack, TextField, Typography,
+  Alert, Box, Button, CircularProgress, FormControl, InputLabel, MenuItem, Paper, Select, TextField, Typography,
   Table, TableBody, TableCell, TableHead, TableRow,
 } from '@mui/material';
 
 import Section from '../components/Section';
+import ErapaveCheck from '../components/ErapaveCheck';
 import { predictModuli, getModelInfo } from '../services/api';
 import { INPUT_DEFINITIONS, INPUT_GROUPS, CORE_INPUTS, MODULI } from '../data/predictorInputs';
 import { EXAMPLE_CASES } from '../data/exampleCases';
+import { loadResults } from '../services/results';
 
 const toFormValues = (inputs) =>
   Object.fromEntries(Object.entries(inputs).map(([k, v]) => [k, String(v)]));
 
-function PredictorPage() {
+// `preset` (optional): a case sent from the Results page, same shape as an example case
+function PredictorPage({ preset }) {
+  const start = preset || EXAMPLE_CASES[0];
   const [modelInfo, setModelInfo] = useState(null);
-  const [example, setExample] = useState(EXAMPLE_CASES[0]);
-  const [values, setValues] = useState(toFormValues(EXAMPLE_CASES[0].inputs));
+  const [example, setExample] = useState(start);
+  const [values, setValues] = useState(toFormValues(start.inputs));
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Holdout cases (never used for training); falls back to the built-in examples
+  const [cases, setCases] = useState(EXAMPLE_CASES);
+  const [erapaveSummary, setErapaveSummary] = useState(null);
+
   // Ask the backend which inputs the current model needs
   useEffect(() => {
     getModelInfo().then(setModelInfo).catch(() => setModelInfo(null));
+    loadResults('holdout')
+      .then((h) => {
+        if (!h.cases?.length) return;
+        setCases(h.cases);
+        setErapaveSummary(h.erapave_summary);
+        // start on the first holdout case, unless a case was sent from the Results page
+        if (!preset) loadExample(h.cases.find((c) => c.id === 'holdout-1876-1') || h.cases[0]);
+      })
+      .catch(() => {});
   }, []);
 
   const features = modelInfo?.features || CORE_INPUTS;
@@ -43,6 +60,11 @@ function PredictorPage() {
     setResult(null);
     setError(null);
   };
+
+  // A new case sent from the Results page
+  useEffect(() => {
+    if (preset) loadExample(preset);
+  }, [preset]);
 
   const clearForm = () => {
     setExample(null);
@@ -79,21 +101,38 @@ function PredictorPage() {
           four layer moduli of the 4-layer structure (asphalt, base, subbase, subgrade) in milliseconds,
           instead of an iterative ERAPave backcalculation."
       >
-        <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
-          <Typography variant="body2" sx={{ alignSelf: 'center', mr: 1 }}>
-            Load example:
-          </Typography>
-          {EXAMPLE_CASES.map((ex) => (
-            <Chip
-              key={ex.id}
-              label={ex.label}
-              onClick={() => loadExample(ex)}
-              color={example?.id === ex.id ? 'primary' : 'default'}
-              variant={example?.id === ex.id ? 'filled' : 'outlined'}
-            />
-          ))}
-          <Chip label="Clear" onClick={clearForm} variant="outlined" />
-        </Stack>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 2 }}>
+          <FormControl size="small" sx={{ minWidth: 340 }}>
+            <InputLabel id="case-label">Holdout case ({cases.length}, never used for training)</InputLabel>
+            <Select
+              labelId="case-label"
+              label={`Holdout case (${cases.length}, never used for training)`}
+              value={cases.some((c) => c.id === example?.id) ? example.id : ''}
+              onChange={(e) => loadExample(cases.find((c) => c.id === e.target.value))}
+            >
+              {cases.map((c) => (
+                <MenuItem key={c.id} value={c.id}>
+                  {c.label}{c.erapave?.ml ? ' — ✓ ERAPave check' : ''}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button variant="outlined" size="small" onClick={clearForm}>Clear</Button>
+        </Box>
+
+        {erapaveSummary && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            ERAPave check of the ML moduli: <strong>{erapaveSummary.cases}</strong> holdout cases,
+            median RMS <strong>{erapaveSummary.median_rms_pct}%</strong>,{' '}
+            {erapaveSummary.within_3} within 3% and {erapaveSummary.within_5} within 5%.
+          </Alert>
+        )}
+
+        {example?.fromResults && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Loaded from the Results page: <strong>{example.label}</strong>
+          </Alert>
+        )}
 
         <Box component="form" onSubmit={handleSubmit}>
           {groups.map((group) => (
@@ -145,6 +184,8 @@ function PredictorPage() {
         )}
 
         {result && <Results result={result} reference={example?.backcalc} />}
+
+        {example?.erapave && <ErapaveCheck check={example.erapave} measured={example.inputs} predicted={result} />}
       </Section>
 
       {modelInfo && <ModelInfo info={modelInfo} />}

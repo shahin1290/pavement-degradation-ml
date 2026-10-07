@@ -8,10 +8,12 @@ import PredictorPage from './pages/PredictorPage';
 import VariablesPage from './pages/VariablesPage';
 import ObjectivePage from './pages/ObjectivePage';
 import WorkPackagesPage from './pages/WorkPackagesPage';
+import ResultsPage from './pages/ResultsPage';
 
 // To add a page: create it in src/pages/ and add one line here.
 const PAGES = [
   { id: 'predictor', label: '🔮 Live Predictor', component: PredictorPage },
+  { id: 'results', label: '📈 Results', component: ResultsPage },
   { id: 'variables', label: '📋 Variable Definitions', component: VariablesPage },
   { id: 'objective', label: '🎯 Objective & Key Picture', component: ObjectivePage },
   { id: 'wp', label: '🏗️ WP0–WP4', component: WorkPackagesPage },
@@ -19,7 +21,14 @@ const PAGES = [
 
 function App() {
   const [activeId, setActiveId] = useState(PAGES[0].id);
+  const [preset, setPreset] = useState(null); // case sent from Results to the predictor
   const ActivePage = PAGES.find((p) => p.id === activeId).component;
+
+  const openInPredictor = (caseData) => {
+    setPreset(caseData);
+    setActiveId('predictor');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -28,7 +37,7 @@ function App() {
         <Header />
         <Navigation pages={PAGES} activeId={activeId} onChange={setActiveId} />
         <main>
-          <ActivePage />
+          <ActivePage preset={preset} onOpenInPredictor={openInPredictor} />
         </main>
       </Container>
     </ThemeProvider>
