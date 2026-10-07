@@ -1,19 +1,15 @@
-import React from 'react';
+import { Box, Typography } from '@mui/material';
 
 function Header() {
   return (
-    <header className="dashboard-header">
-
-      <h1>
+    <Box component="header" sx={{ py: 3, textAlign: 'center' }}>
+      <Typography variant="h4" component="h1">
         Trafikverket Structural Pavement AI Dashboard
-      </h1>
-
-      <p>
-        Machine Learning Infrastructure for Pavement
-        Structural-Response Prediction
-      </p>
-
-    </header>
+      </Typography>
+      <Typography color="text.secondary">
+        Machine learning for pavement layer moduli from TSD measurements
+      </Typography>
+    </Box>
   );
 }
 

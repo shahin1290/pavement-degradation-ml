@@ -1,5 +1,6 @@
 import sys
 
+from ml import config
 from ml.exception import CustomException
 from ml.logger import logging
 from ml.components.data_ingestion import DataIngestion
@@ -8,13 +9,13 @@ from ml.components.model_trainer import ModelTrainer
 
 
 class TrainingPipeline:
-    def run_pipeline(self, raw_data_path: str):
+    def run_pipeline(self, raw_data_path: str = None):
         try:
-            logging.info("--- Structural AI Training Pipeline Triggered ---")
+            logging.info("--- Training pipeline started ---")
 
             ingestion = DataIngestion()
             train_path, test_path = ingestion.initiate_data_ingestion(
-                raw_data_path
+                raw_data_path or config.DATA_PATH
             )
 
             transformation = DataTransformation()
@@ -23,18 +24,15 @@ class TrainingPipeline:
             )
 
             trainer = ModelTrainer()
-            r2, mae = trainer.initiate_model_trainer(
-                X_train, y_train, X_test, y_test
-            )
+            metrics = trainer.initiate_model_trainer(X_train, y_train, X_test, y_test)
 
-            logging.info("--- Structural AI Training Pipeline Finished ---")
-            return r2, mae
+            logging.info("--- Training pipeline finished ---")
+            return metrics
 
         except Exception as e:
-            logging.error("Structural AI Training Pipeline failed.")
+            logging.error("Training pipeline failed.")
             raise CustomException(e, sys)
 
 
 if __name__ == "__main__":
-    pipeline = TrainingPipeline()
-    pipeline.run_pipeline("data/results_log_260608.csv")
+    TrainingPipeline().run_pipeline()

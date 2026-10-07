@@ -1,40 +1,35 @@
-from ml.pipelines.prediction_pipeline import (
-    PredictionPipeline,
-    RoadDataInput,
-)
+from ml.pipelines.prediction_pipeline import PredictionPipeline, RoadDataInput
+
+# Example values shown in the prompts (row 0, survey 1)
+EXAMPLES = {
+    "D0": 418.99, "D130": 342.35, "D215": 276.1, "D300": 231.06, "D450": 163.995,
+    "D600": 107.06, "D900": 41.51, "D1200": 20.07, "D1500": 11.395,
+    "thk1_mm": 81.85, "thk2_mm": 112.37, "thk3_mm": 991.35,
+    "survey": 1, "asphalt_temp_C": 29.3, "speed_kmh": 42.75,
+}
 
 
 def query_model():
     print("\n" + "=" * 60)
-    print(" STRUCTURAL PAVEMENT AI - E1-E4 MODULUS SURROGATE ")
+    print(" PAVEMENT MODULUS SURROGATE: E1-E4 FROM TSD DATA ")
     print("=" * 60)
+    print("Deflections in micrometres (positive), thicknesses in mm.\n")
 
     try:
-        h1 = float(input("Enter Layer 1 Thickness [cm] (e.g. 18.75): "))
-        h2 = float(input("Enter Layer 2 Thickness [cm] (e.g. 33.0): "))
-        h3 = float(input("Enter Layer 3 Thickness [cm] (e.g. 70.72): "))
-        bells_temp = float(input("Enter Pavement Temp BELLS_TEMP (°C) (e.g. 20.81): "))
-        d0_target = float(input("Enter Target D0 (um) (e.g. 298.02): "))
-        sci300_target = float(input("Enter Target SCI300 (um) (e.g. 104.92): "))
-
-        road_profile = RoadDataInput(
-            h1_cm=h1,
-            h2_cm=h2,
-            h3_cm=h3,
-            bells_temp=bells_temp,
-            d0_target=d0_target,
-            sci300_target=sci300_target,
-        )
-
-        input_df = road_profile.get_data_as_dataframe()
         pipeline = PredictionPipeline()
-        preds = pipeline.predict(input_df)
+        inputs = {}
+        for name in pipeline.feature_names:     # asks for exactly what the model needs
+            ex = EXAMPLES.get(name)
+            hint = f" (e.g. {ex})" if ex is not None else ""
+            inputs[name] = float(input(f"Enter {name}{hint}: "))
+
+        preds = pipeline.predict(RoadDataInput(**inputs).get_data_as_dataframe())
 
         print("\n" + "-" * 60)
-        print(f"Predicted E1 (Asphalt Layer): {preds[0]:.2f} MPa")
-        print(f"Predicted E2 (Base Layer):     {preds[1]:.2f} MPa")
-        print(f"Predicted E3 (Subbase Layer):  {preds[2]:.2f} MPa")
-        print(f"Predicted E4 (Subgrade):       {preds[3]:.2f} MPa")
+        print(f"Predicted E1 (asphalt):  {preds[0]:8.0f} MPa")
+        print(f"Predicted E2 (base):     {preds[1]:8.0f} MPa")
+        print(f"Predicted E3 (subbase):  {preds[2]:8.0f} MPa")
+        print(f"Predicted E4 (subgrade): {preds[3]:8.0f} MPa")
         print("-" * 60 + "\n")
 
     except Exception as e:

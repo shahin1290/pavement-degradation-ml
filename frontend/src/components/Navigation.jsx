@@ -1,37 +1,19 @@
-import React from 'react';
+import { Tabs, Tab } from '@mui/material';
 
-function Navigation({
-  activeTab,
-  setActiveTab
-}) {
-
-  const tabs = [
-    ['predictor', '🔮 Live Predictor'],
-    ['variables', '📋 Variable Definitions'],
-    ['objective', '🎯 Objective & Key Picture'],
-    ['wp', '🏗️ WP0–WP4']
-  ];
-
+// `pages` comes from App.jsx: [{ id, label, ... }]
+function Navigation({ pages, activeId, onChange }) {
   return (
-    <nav className="dashboard-navigation">
-
-      {tabs.map(([tab, label]) => (
-
-        <button
-          key={tab}
-          onClick={() => setActiveTab(tab)}
-          className={
-            activeTab === tab
-              ? 'nav-button active'
-              : 'nav-button'
-          }
-        >
-          {label}
-        </button>
-
+    <Tabs
+      value={activeId}
+      onChange={(_, id) => onChange(id)}
+      variant="scrollable"
+      scrollButtons="auto"
+      sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+    >
+      {pages.map((page) => (
+        <Tab key={page.id} value={page.id} label={page.label} />
       ))}
-
-    </nav>
+    </Tabs>
   );
 }
 
