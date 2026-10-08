@@ -38,12 +38,12 @@ export function SimpleTable({ columns, rows, highlight, perPage }) {
 
   return (
     <Box sx={{ mb: 2 }}>
-      <Box sx={{ overflowX: 'auto' }}>
+      <Box sx={{ overflowX: 'auto', border: 1, borderColor: 'divider', borderRadius: 2 }}>
         <Table size="small">
           <TableHead>
             <TableRow>
               {columns.map((c) => (
-                <TableCell key={c.key} align={c.align || 'right'} sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+                <TableCell key={c.key} align={c.align || 'right'} sx={{ whiteSpace: 'nowrap', px: 1.25, width: c.width }}>
                   {c.label}
                 </TableCell>
               ))}
@@ -53,7 +53,7 @@ export function SimpleTable({ columns, rows, highlight, perPage }) {
             {shown.map((r, i) => (
               <TableRow key={i} hover sx={highlight?.(r) ? { bgcolor: '#fff7e6' } : undefined}>
                 {columns.map((c) => (
-                  <TableCell key={c.key} align={c.align || 'right'} sx={{ whiteSpace: 'nowrap' }}>
+                  <TableCell key={c.key} align={c.align || 'right'} sx={{ whiteSpace: 'nowrap', px: 1.25 }}>
                     {c.format ? c.format(r[c.key], r) : r[c.key]}
                   </TableCell>
                 ))}
@@ -76,5 +76,8 @@ export function SimpleTable({ columns, rows, highlight, perPage }) {
   );
 }
 
-export const fmt = (v, d = 0) => (v == null ? '–' : Number(v).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d }));
+// Modulus limits used in the backcalculation (MPa)
+export const LIMITS = { E1: [1500, 8000], E2: [100, 3000], E3: [50, 600], E4: [30, 400] };
+
+export const fmt =(v, d = 0) => (v == null ? '–' : Number(v).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d }));
 export const fmtPct = (v) => (v == null ? '–' : `${Number(v).toFixed(1)}%`);

@@ -7,7 +7,7 @@ Reads (from data/):
   backcalc_rows0-999_4L_bounded_vs_unbounded.csv experiment: bounded vs unbounded (rows 0-999)
 
   artifacts/holdout.csv                          the 20 holdout cases (made by train.py)
-  data/erapave_holdout/*.txt                     ERAPave output files for holdout cases (optional)
+  data/erapave_holdout/*.txt                     ERAPave output with the ML moduli for holdout cases (optional)
 
 Writes (to frontend/public/results/):
   dataset.json   every case, compact column format
@@ -143,20 +143,43 @@ def pick_examples(r):
 
 
 
+# ML test: model trained on bounded good fits (A) vs only the cases that are realistic
+# without limits (B). Same model and features, 5-fold split by road stretch on rows 0-999.
+# Score = RMS error (%) of the deflections calculated from the predicted moduli.
+# "difficult" = the cases that are NOT realistic without limits.
+ML_FILTER_TEST = {
+    "bounded": {"train_cases": 3518, "all_rms": 3.4, "difficult_rms": 6.1, "difficult_within5": 42},
+    "unbounded_realistic": {"train_cases": 2589, "all_rms": 3.6, "difficult_rms": 8.0, "difficult_within5": 31},
+}
+
+
 def build_bounds():
     d = pd.read_csv(BOUNDS)  # all cases; cases that never hit a limit keep the same values unbounded
 
     def summ(g):
         return {"cases": int(len(g)), "good_before": pct(g.rms_pct_4L <= 5), "good_after": pct(g.rms_pct_unb <= 5)}
 
+    inside = np.logical_and.reduce([
+        (d[f"{e}_unb"] >= lo * 0.98) & (d[f"{e}_unb"] <= hi * 1.02) for e, (lo, hi) in LIMITS.items()
+    ])
+    good_unb = d.rms_pct_unb <= 5
+    good_4l = d.rms_pct_4L <= 5
+
     write("bounds.json", {
         "rows": "0-999", "total": summ(d),
         "by_survey": [{"survey": int(s), "date": SURVEYS[int(s)], **summ(g)} for s, g in d.groupby("survey")],
         "recalculated": int(d.recalculated.sum()),
+        "good_bounded": int(good_4l.sum()),
+        "good_unbounded": int(good_unb.sum()),
+        "realistic_unbounded": int((good_unb & inside).sum()),
+        "realistic_unbounded_pct": pct(good_unb & inside),
         "E1_above_8000": int((d.E1_unb > 8000 * 1.02).sum()),
         "E1_unb_p95": int(round(d.E1_unb.quantile(0.95), -2)),
         "E2_below_100": int((d.E2_unb < 100 * 0.98).sum()),
+        "E2_unb_min": int(d.E2_unb.min()),
         "E4_above_400": int((d.E4_unb > 400 * 1.02).sum()),
+        "above_50000": int((d[[f"{e}_unb" for e in LIMITS]] >= 50000).any(axis=1).sum()),
+        "ml_filter_test": ML_FILTER_TEST,
         "limits": LIMITS,
         "examples": pick_examples(d[d.recalculated == 1]),
     })
@@ -196,9 +219,8 @@ ERAPAVE_X_CM = [0, 13, 21.5, 30, 45, 60, 90, 120, 150]
 
 def erapave_checks(cases):
     """
-    Match ERAPave output files to holdout cases (by file name rowXX_surveyY, else by thicknesses)
-    and compare the calculated deflections with the measured ones.
-    A file whose name contains 'final' is the converged run after iteration.
+    Match ERAPave output files (run with the ML moduli) to holdout cases (by file name
+    rowXX_surveyY, else by thicknesses) and compare the calculated deflections with the measured ones.
     """
     if not ERAPAVE_DIR.exists():
         return {}
@@ -230,19 +252,18 @@ def erapave_checks(cases):
         if match is None:
             print(f"  skipped {f.name}: no matching holdout case")
             continue
-        kind = "final" if "final" in name else "ml"
         meas = [match["inputs"][d] for d in DEFL]
         calc = [out["defl"].get(float(x)) for x in ERAPAVE_X_CM]
         err = [(c / m - 1) * 100 for c, m in zip(calc, meas)]
-        found.setdefault(match["id"], {})[kind] = {
+        found[match["id"]] = {"ml": {
             "file": f.name,
             "E": [round(e, 1) for e in out["E"]],
             "deflections": [round(v, 2) for v in calc],
             "error_pct": [round(e, 2) for e in err],
             "rms_pct": round(float(np.sqrt(np.mean(np.square(err)))), 2),
             "rmse_um": round(float(np.sqrt(np.mean(np.square(np.array(calc) - np.array(meas))))), 2),
-        }
-        print(f"  {f.name} -> {match['id']} ({kind})")
+        }}
+        print(f"  {f.name} -> {match['id']}")
     return found
 
 
@@ -267,12 +288,12 @@ def build_holdout():
     for c in cases:
         if c["id"] in checks:
             c["erapave"] = checks[c["id"]]
-    ml = [c["erapave"]["ml"]["rms_pct"] for c in cases if "ml" in c.get("erapave", {})]
+    rms = [c["erapave"]["ml"]["rms_pct"] for c in cases if "erapave" in c]
     summary = None
-    if ml:
-        summary = {"cases": len(ml), "median_rms_pct": round(float(np.median(ml)), 2),
-                   "within_3": int(sum(v <= 3 for v in ml)), "within_5": int(sum(v <= 5 for v in ml))}
-        print(f"  ERAPave check: {len(ml)} cases, median RMS {summary['median_rms_pct']}%")
+    if rms:
+        summary = {"cases": len(rms), "median_rms_pct": round(float(np.median(rms)), 2),
+                   "within_3": int(sum(v <= 3 for v in rms)), "within_5": int(sum(v <= 5 for v in rms))}
+        print(f"  ERAPave check: {len(rms)} cases, median RMS {summary['median_rms_pct']}%")
     write("holdout.json", {"note": "Never used for training or testing the model.",
                            "erapave_summary": summary, "cases": cases})
 
