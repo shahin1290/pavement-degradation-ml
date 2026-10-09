@@ -2,7 +2,7 @@
 // Backend address: VITE_API_URL if set (in .env locally or in the Vercel project settings),
 // otherwise the Render backend for the deployed site and the local backend for `npm run dev`.
 
-const PRODUCTION_API = 'https://pavement-degradation-ml.onrender.com';
+const PRODUCTION_API = 'https://pavement-api-1061126389150.europe-north1.run.app';
 const LOCAL_API = 'http://127.0.0.1:8000';
 
 const API_URL = (

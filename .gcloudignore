@@ -1,0 +1,14 @@
+# Same as .dockerignore: files NOT uploaded to Google Cloud
+# Keep the upload small: only backend/, ml/ and artifacts/model.pkl are needed
+.venv/
+venv/
+frontend/
+data/
+notebooks/
+logs/
+**/__pycache__/
+*.ipynb
+*.xlsx
+*.csv
+*.zip
+.git/

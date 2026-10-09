@@ -1,0 +1,8 @@
+# scikit-learn must match the version the model was trained with
+scikit-learn==1.8.0
+fastapi
+uvicorn
+pydantic
+numpy
+pandas
+scipy
