@@ -239,26 +239,23 @@ function Results({ result, reference }) {
 }
 
 /** Is this measurement suitable for backcalculation? Shown above the moduli. */
+const RELIABILITY_LEVELS = [
+  // p_unreliable below `max` -> this level
+  { max: 0.2, severity: 'success', chip: '✓ Reliable measurement', text: (p) => `Low risk (${p}%) that backcalculation gives unrealistic moduli for this bowl.` },
+  { max: 0.5, severity: 'info', chip: '◐ Uncertain measurement', text: (p) => `Moderate risk (${p}%) of unrealistic moduli. Check the ranges below.` },
+  { max: 1.01, severity: 'warning', chip: '⚠ Unreliable measurement', text: (p) => `High risk (${p}%) that backcalculation gives unrealistic moduli for this bowl. Treat the values with care.` },
+];
+
 function ReliabilityBanner({ rel }) {
   const pct = Math.round(rel.p_unreliable * 100);
   const cov = Math.round(rel.coverage * 100);
+  const level = RELIABILITY_LEVELS.find((l) => rel.p_unreliable < l.max);
   return (
-    <Alert
-      severity={rel.unreliable ? 'warning' : 'success'}
-      icon={false}
-      sx={{ mb: 2, alignItems: 'center' }}
-    >
+    <Alert severity={level.severity} icon={false} sx={{ mb: 2, alignItems: 'center' }}>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
-        <Chip
-          size="small"
-          color={rel.unreliable ? 'warning' : 'success'}
-          label={rel.unreliable ? '⚠ Unreliable measurement' : '✓ Reliable measurement'}
-        />
+        <Chip size="small" color={level.severity} label={level.chip} />
         <Typography variant="body2">
-          {rel.unreliable
-            ? `${pct}% chance that backcalculation gives unrealistic moduli for this bowl. Treat the values with care.`
-            : `Only ${pct}% chance of unrealistic moduli for this bowl.`}
-          {' '}Ranges below contain the true value in about {cov}% of cases.
+          {level.text(pct)} The ranges below contain the true value in about {cov}% of cases.
         </Typography>
       </Box>
     </Alert>

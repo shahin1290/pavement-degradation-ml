@@ -25,15 +25,21 @@ class PredictorService:
             self._reliability = load_reliability()
         return self._reliability
 
-    def _reliability_check(self, input_df) -> Optional[dict]:
+    def _reliability_check(self, input_df, predictions) -> Optional[dict]:
         bundle = self.reliability_bundle
         if bundle is None:
             return None
         r = assess(bundle, input_df).iloc[0]
+        ranges = {}
+        for t, pred in zip(bundle["ranges"], predictions):
+            # the range comes from separate low/high models; make sure it always contains the prediction
+            lo = min(float(r[f"{t}_low"]), pred)
+            hi = max(float(r[f"{t}_high"]), pred)
+            ranges[t] = [round(lo), round(hi)]
         return {
             "p_unreliable": round(float(r["p_unreliable"]), 3),
             "unreliable": bool(r["unreliable"]),
-            "ranges_MPa": {t: [round(float(r[f"{t}_low"])), round(float(r[f"{t}_high"]))] for t in bundle["ranges"]},
+            "ranges_MPa": ranges,
             "coverage": bundle["coverage"],
         }
 
@@ -79,7 +85,7 @@ class PredictorService:
         inputs = self._collect_inputs(request)
         input_df = RoadDataInput(**inputs).get_data_as_dataframe()
         predictions = self.pipeline.predict(input_df)
-        return predictions, self._range_warnings(inputs), self._reliability_check(input_df)
+        return predictions, self._range_warnings(inputs), self._reliability_check(input_df, predictions)
 
     def model_info(self) -> dict:
         b = self.pipeline.bundle
