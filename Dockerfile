@@ -11,7 +11,7 @@ RUN pip install -r requirements-cloudrun.txt
 # Only what the API needs (see .dockerignore)
 COPY backend ./backend
 COPY ml ./ml
-COPY artifacts/model.pkl ./artifacts/model.pkl
+COPY artifacts/model.pkl artifacts/reliability.pkl ./artifacts/
 
 # Cloud Run sends the port in $PORT (8080 by default)
 CMD exec uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8080}

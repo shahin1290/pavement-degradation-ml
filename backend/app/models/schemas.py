@@ -34,6 +34,16 @@ class PredictionRequest(BaseModel):
     speed_kmh: Optional[float] = Field(None, description="TSD survey speed (km/h)", example=42.75)
 
 
+class Reliability(BaseModel):
+    """Is this measurement suitable for backcalculation? Plus a calibrated range for each modulus."""
+    p_unreliable: float = Field(..., description="Probability (0-1) that the backcalculated moduli are unrealistic")
+    unreliable: bool = Field(..., description="True if p_unreliable is above the model's threshold")
+    ranges_MPa: Dict[str, List[float]] = Field(
+        ..., description="Calibrated low-high range per modulus (about 80 % of true values fall inside)"
+    )
+    coverage: float = Field(..., description="Target share of true values inside the range")
+
+
 class PredictionResponse(BaseModel):
     E1_Asphalt_MPa: float = Field(..., description="Predicted asphalt layer modulus")
     E2_Base_MPa: float = Field(..., description="Predicted base layer modulus")
@@ -42,6 +52,9 @@ class PredictionResponse(BaseModel):
     warnings: List[str] = Field(
         default_factory=list,
         description="Inputs outside the training data range; predictions there are less reliable",
+    )
+    reliability: Optional[Reliability] = Field(
+        None, description="Reliability check (only if artifacts/reliability.pkl exists)"
     )
 
 

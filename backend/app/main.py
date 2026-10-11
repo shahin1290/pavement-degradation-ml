@@ -59,7 +59,7 @@ def model_info():
 @app.post("/api/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
     try:
-        predictions, warnings = predictor_service.predict_moduli(request)
+        predictions, warnings, reliability = predictor_service.predict_moduli(request)
 
         return PredictionResponse(
             E1_Asphalt_MPa=predictions[0],
@@ -67,6 +67,7 @@ def predict(request: PredictionRequest):
             E3_Subbase_MPa=predictions[2],
             E4_Subgrade_MPa=predictions[3],
             warnings=warnings,
+            reliability=reliability,
         )
 
     except (MissingInputError, ValueError) as e:

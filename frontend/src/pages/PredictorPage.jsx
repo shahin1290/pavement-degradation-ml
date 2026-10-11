@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, CircularProgress, FormControl, InputLabel, MenuItem, Paper, Select, TextField, Typography,
+  Alert, Box, Button, Chip, CircularProgress, FormControl, InputLabel, MenuItem, Paper, Select, TextField, Typography,
   Table, TableBody, TableCell, TableHead, TableRow,
 } from '@mui/material';
 
@@ -206,19 +206,27 @@ function Results({ result, reference }) {
         </Alert>
       ))}
 
+      {result.reliability && <ReliabilityBanner rel={result.reliability} />}
+
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' } }}>
         {MODULI.map((m) => {
           const value = result[m.key];
           const ref = reference?.[m.target];
           const diff = ref ? ((value / ref - 1) * 100).toFixed(0) : null;
+          const range = result.reliability?.ranges_MPa?.[m.target];
           return (
             <Paper key={m.key} variant="outlined" sx={{ p: 2 }}>
               <Typography variant="body2" color="text.secondary">
                 {m.label}
               </Typography>
               <Typography variant="h5">{Math.round(value).toLocaleString()} MPa</Typography>
+              {range && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                  likely {range[0].toLocaleString()} – {range[1].toLocaleString()}
+                </Typography>
+              )}
               {ref && (
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 0.5 }}>
                   Backcalculated: {ref.toLocaleString()} MPa ({diff > 0 ? '+' : ''}{diff}%)
                 </Typography>
               )}
@@ -227,6 +235,33 @@ function Results({ result, reference }) {
         })}
       </Box>
     </Box>
+  );
+}
+
+/** Is this measurement suitable for backcalculation? Shown above the moduli. */
+function ReliabilityBanner({ rel }) {
+  const pct = Math.round(rel.p_unreliable * 100);
+  const cov = Math.round(rel.coverage * 100);
+  return (
+    <Alert
+      severity={rel.unreliable ? 'warning' : 'success'}
+      icon={false}
+      sx={{ mb: 2, alignItems: 'center' }}
+    >
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+        <Chip
+          size="small"
+          color={rel.unreliable ? 'warning' : 'success'}
+          label={rel.unreliable ? '⚠ Unreliable measurement' : '✓ Reliable measurement'}
+        />
+        <Typography variant="body2">
+          {rel.unreliable
+            ? `${pct}% chance that backcalculation gives unrealistic moduli for this bowl. Treat the values with care.`
+            : `Only ${pct}% chance of unrealistic moduli for this bowl.`}
+          {' '}Ranges below contain the true value in about {cov}% of cases.
+        </Typography>
+      </Box>
+    </Alert>
   );
 }
 

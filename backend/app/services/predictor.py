@@ -1,8 +1,10 @@
 import math
-from typing import List, Tuple
+import os
+from typing import List, Optional, Tuple
 
 from ml.pipelines.prediction_pipeline import PredictionPipeline, RoadDataInput
 from backend.app.models.schemas import PredictionRequest
+from ml.reliability import BUNDLE_PATH as RELIABILITY_PATH, load_reliability, assess
 
 DEFLECTIONS = ["D0", "D130", "D215", "D300", "D450", "D600", "D900", "D1200", "D1500"]
 
@@ -14,6 +16,26 @@ class MissingInputError(ValueError):
 class PredictorService:
     def __init__(self):
         self.pipeline = PredictionPipeline()
+        self._reliability = None            # loaded on first use
+
+    @property
+    def reliability_bundle(self):
+        """Reliability model, or None if it has not been trained (the API then works without it)."""
+        if self._reliability is None and os.path.exists(RELIABILITY_PATH):
+            self._reliability = load_reliability()
+        return self._reliability
+
+    def _reliability_check(self, input_df) -> Optional[dict]:
+        bundle = self.reliability_bundle
+        if bundle is None:
+            return None
+        r = assess(bundle, input_df).iloc[0]
+        return {
+            "p_unreliable": round(float(r["p_unreliable"]), 3),
+            "unreliable": bool(r["unreliable"]),
+            "ranges_MPa": {t: [round(float(r[f"{t}_low"])), round(float(r[f"{t}_high"]))] for t in bundle["ranges"]},
+            "coverage": bundle["coverage"],
+        }
 
     @property
     def required_features(self) -> List[str]:
@@ -53,11 +75,11 @@ class PredictorService:
                 )
         return warnings
 
-    def predict_moduli(self, request: PredictionRequest) -> Tuple[list, List[str]]:
+    def predict_moduli(self, request: PredictionRequest) -> Tuple[list, List[str], Optional[dict]]:
         inputs = self._collect_inputs(request)
         input_df = RoadDataInput(**inputs).get_data_as_dataframe()
         predictions = self.pipeline.predict(input_df)
-        return predictions, self._range_warnings(inputs)
+        return predictions, self._range_warnings(inputs), self._reliability_check(input_df)
 
     def model_info(self) -> dict:
         b = self.pipeline.bundle
