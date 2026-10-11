@@ -52,7 +52,7 @@ function ResultsPage({ onOpenInPredictor }) {
 
   return (
     <Section
-      title="📈 Backcalculation Results"
+      title="🧮 Backcalculation"
       intro="Östergötland TSD data only (4 surveys, Aug 2022 – Sep 2024). This is the data the ML model is trained on."
     >
       <ViewSwitch value={viewId} onChange={setViewId} />

@@ -96,7 +96,7 @@ function PredictorPage({ preset }) {
   return (
     <>
       <Section
-        title="🔮 Live Predictor — Layer Moduli E1–E4"
+        title="🤖 ML Model — Predict Layer Moduli E1–E4"
         intro="Enter a TSD deflection basin and the layer thicknesses. The trained model returns the
           four layer moduli of the 4-layer structure (asphalt, base, subbase, subgrade) in milliseconds,
           instead of an iterative ERAPave backcalculation."
@@ -130,7 +130,7 @@ function PredictorPage({ preset }) {
 
         {example?.fromResults && (
           <Alert severity="info" sx={{ mb: 2 }}>
-            Loaded from the Results page: <strong>{example.label}</strong>
+            Loaded from the Backcalculation page: <strong>{example.label}</strong>
           </Alert>
         )}
 
@@ -162,7 +162,7 @@ function PredictorPage({ preset }) {
                       size="small"
                       value={values[name] ?? ''}
                       onChange={handleChange(name)}
-                      inputProps={{ step: 'any' }}
+                      slotProps={{ htmlInput: { step: 'any' } }}
                       required
                     />
                   );

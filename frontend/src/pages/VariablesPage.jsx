@@ -6,7 +6,7 @@ import { VARIABLE_GROUPS, ROLES, BACKCALC_SETTINGS } from '../data/variables';
 function VariablesPage() {
   return (
     <Section
-      title="📋 Variable Definitions"
+      title="📋 Input Data — Variable Definitions"
       intro="Variables in the TSD data files and their role in the backcalculation and the ML model."
     >
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>

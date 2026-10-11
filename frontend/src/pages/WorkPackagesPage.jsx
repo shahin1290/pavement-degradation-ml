@@ -6,7 +6,7 @@ import { WORK_PACKAGES, AI_ROLE } from '../data/workPackages';
 function WorkPackagesPage() {
   return (
     <Section
-      title="🏗️ Work Packages WP0–WP4"
+      title="🗺️ Roadmap — Work Packages WP0–WP4"
       intro="The project moves from NDT data collection to machine learning, Digital Twin development,
         validation and maintenance decision-making."
     >
