@@ -89,7 +89,7 @@ function ExploreTab({ onOpenInPredictor }) {
   return (
     <>
       <Typography color="text.secondary" sx={{ mb: 1 }}>
-        All backcalculated cases (4 layers, with limits). Moduli E1–E4 in MPa. Click <strong>Predict</strong> to
+        All backcalculated Östergötland cases (4 layers, with limits). Moduli E1–E4 in MPa. Click <strong>Predict</strong> to
         compare the ML model with the backcalculation for any case.
       </Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', mb: 2 }}>
