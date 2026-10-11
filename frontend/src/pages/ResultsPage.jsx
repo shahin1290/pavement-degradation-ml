@@ -1,64 +1,48 @@
 import { useState } from 'react';
 import { Box, ButtonBase, Typography } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 
 import Section from '../components/Section';
 import SummaryTab from '../components/results/SummaryTab';
 import ExploreTab from '../components/results/ExploreTab';
 
+// The first entry opens by default.
 // To add a view: build its JSON in make_results_data.py,
 // create a component in components/results/, and add one entry here.
 const VIEWS = [
-  {
-    id: 'process',
-    icon: '🧭',
-    label: 'How the training data was built',
-    caption: 'From 28,188 backcalculated cases to 23,642 training cases',
-    component: SummaryTab,
-  },
-  {
-    id: 'cases',
-    icon: '🔎',
-    label: 'All backcalculated cases',
-    caption: 'Browse, filter and predict any of the 28,188 cases',
-    component: ExploreTab,
-  },
+  { id: 'cases', icon: '📋', label: 'Backcalculated cases', component: ExploreTab },
+  { id: 'process', icon: '🧭', label: 'How the data was built', component: SummaryTab },
 ];
 
-/** Large clickable card used to switch between the two views. */
-function ViewCard({ view, active, onClick }) {
+/** Compact segmented switch: one pill per view, the active one filled. */
+function ViewSwitch({ value, onChange }) {
   return (
-    <ButtonBase
-      onClick={onClick}
+    <Box
       sx={{
-        flex: '1 1 260px',
-        justifyContent: 'flex-start',
-        textAlign: 'left',
-        gap: 1.5,
-        p: 2,
-        borderRadius: 3,
-        border: 2,
-        borderColor: active ? 'primary.main' : 'divider',
-        bgcolor: (t) => (active ? alpha(t.palette.primary.main, 0.07) : t.palette.background.paper),
-        boxShadow: active ? '0 4px 14px rgba(31, 95, 139, 0.15)' : 'none',
-        transition: 'all 0.2s',
-        '&:hover': { borderColor: 'primary.main', transform: 'translateY(-1px)' },
+        display: 'inline-flex', p: 0.5, gap: 0.5, mb: 3, borderRadius: 999,
+        bgcolor: 'background.default', border: 1, borderColor: 'divider', maxWidth: '100%', flexWrap: 'wrap',
       }}
     >
-      <Box
-        sx={{
-          width: 48, height: 48, borderRadius: 2, flexShrink: 0, fontSize: '1.6rem',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          bgcolor: (t) => alpha(t.palette.primary.main, active ? 0.15 : 0.07),
-        }}
-      >
-        {view.icon}
-      </Box>
-      <Box>
-        <Typography sx={{ fontWeight: 800, color: active ? 'primary.main' : 'text.primary' }}>{view.label}</Typography>
-        <Typography variant="body2" color="text.secondary">{view.caption}</Typography>
-      </Box>
-    </ButtonBase>
+      {VIEWS.map((v) => {
+        const active = v.id === value;
+        return (
+          <ButtonBase
+            key={v.id}
+            onClick={() => onChange(v.id)}
+            sx={{
+              px: 2.25, py: 1, borderRadius: 999, gap: 1,
+              bgcolor: active ? 'primary.main' : 'transparent',
+              color: active ? '#fff' : 'text.secondary',
+              boxShadow: active ? '0 2px 6px rgba(31, 95, 139, 0.25)' : 'none',
+              transition: 'all 0.15s',
+              '&:hover': { color: active ? '#fff' : 'primary.main' },
+            }}
+          >
+            <span aria-hidden>{v.icon}</span>
+            <Typography component="span" sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{v.label}</Typography>
+          </ButtonBase>
+        );
+      })}
+    </Box>
   );
 }
 
@@ -71,11 +55,7 @@ function ResultsPage({ onOpenInPredictor }) {
       title="📈 Backcalculation Results"
       intro="Östergötland TSD data only (4 surveys, Aug 2022 – Sep 2024). This is the data the ML model is trained on."
     >
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-        {VIEWS.map((v) => (
-          <ViewCard key={v.id} view={v} active={v.id === viewId} onClick={() => setViewId(v.id)} />
-        ))}
-      </Box>
+      <ViewSwitch value={viewId} onChange={setViewId} />
       <Active onOpenInPredictor={onOpenInPredictor} />
     </Section>
   );
