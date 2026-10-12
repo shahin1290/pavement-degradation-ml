@@ -136,6 +136,26 @@ def unrealistic_full():
     }
 
 
+# Clear unrealistic examples: both answers fit the measured bowl within 3 %
+UNREALISTIC_EXAMPLES = [(2437, 3), (715, 4), (3111, 1), (6791, 4), (1693, 2), (629, 3)]
+
+
+def unrealistic_examples():
+    d = pd.read_csv(BOUNDS_FULL).set_index(["row_index", "survey"])
+    E = list(LIMITS)
+    out = []
+    for key in UNREALISTIC_EXAMPLES:
+        if key not in d.index:
+            continue
+        r = d.loc[key]
+        out.append({
+            "row_index": key[0], "survey": key[1], "date": SURVEYS[key[1]], "road": road_of(r.key),
+            "no_limits": [int(r[f"{e}_no_limits"]) for e in E], "rms_no_limits": round(float(r.rms_no_limits_pct), 1),
+            "limits": [int(r[f"{e}_limits"]) for e in E], "rms_limits": round(float(r.rms_limits_pct), 1),
+        })
+    return out
+
+
 def build_bounds():
     """With vs without limits, all Östergötland cases."""
     full = unrealistic_full()
@@ -145,6 +165,7 @@ def build_bounds():
     write("bounds.json", {
         "limits": LIMITS,
         "full": full,
+        "examples": unrealistic_examples(),
         "ml_filter_test": ML_FILTER_TEST,
     })
 

@@ -62,6 +62,24 @@ function Share({ pct, count }) {
   );
 }
 
+/** E1 / E2 / E3 / E4 with impossible values in red. */
+function Moduli({ values, limits }) {
+  return (
+    <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+      {values.map((v, i) => {
+        const [lo, hi] = Object.values(limits)[i];
+        const bad = v < lo * 0.98 || v > hi * 1.02;
+        return (
+          <span key={i}>
+            {i > 0 && <Box component="span" sx={{ color: 'text.disabled' }}> / </Box>}
+            <Box component="span" sx={bad ? { color: 'error.main', fontWeight: 800 } : undefined}>{fmt(v)}</Box>
+          </span>
+        );
+      })}
+    </Box>
+  );
+}
+
 const shareColumn = { key: 'unrealistic_pct', label: 'Unrealistic', format: (v, r) => <Share pct={v} count={r.unrealistic} /> };
 
 function SummaryTab() {
@@ -80,11 +98,34 @@ function SummaryTab() {
       <Step
         n={1}
         title="Backcalculate all data without limits"
-        subtitle="Unrealistic = the calculated bowl matches the measured bowl, but a layer gets an impossible stiffness (for example a base of 21 MPa under a subbase of 80,000 MPa)."
+        subtitle="Unrealistic = the calculated bowl matches the measured bowl, but a layer gets an impossible stiffness."
       >
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 1 }}>
           <Stat value={fmtPct(F.unrealistic_pct)} label={`of all bowls are unrealistic (${fmt(F.unrealistic)} of ${fmt(F.cases)})`} color="warning" />
         </Box>
+
+        {b.examples?.length > 0 && (
+          <>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2.5, mb: 1 }}>Examples</Typography>
+            <SimpleTable
+              rows={b.examples}
+              columns={[
+                { key: 'road', label: 'Road, survey', align: 'left', format: (v, r) => <span><b>{v}</b>, {r.date}</span> },
+                {
+                  key: 'no_limits', label: 'Without limits: E1 / E2 / E3 / E4 (MPa)',
+                  format: (v, r) => <span><Moduli values={v} limits={b.limits} /> <small>(fit {fmt(r.rms_no_limits, 1)}%)</small></span>,
+                },
+                {
+                  key: 'limits', label: 'With limits (MPa)',
+                  format: (v, r) => <span><Moduli values={v} limits={b.limits} /> <small>(fit {fmt(r.rms_limits, 1)}%)</small></span>,
+                },
+              ]}
+            />
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Both answers match the measured bowl within 3%, but the red values are not possible in a real road.
+            </Typography>
+          </>
+        )}
 
         <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2.5, mb: 1 }}>By survey</Typography>
         <SimpleTable
