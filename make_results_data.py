@@ -2,17 +2,15 @@
 Build the JSON files shown on the frontend "Results" page.
 
 Reads (from data/):
-  backcalc_rows0-7050_full.csv                  all backcalculated cases (4 layers, bounded)
-  backcalc_rows0-999_4or5L_full.csv             experiment: 4 or 5 layers (rows 0-999)
-  backcalc_rows0-999_4L_bounded_vs_unbounded.csv experiment: bounded vs unbounded (rows 0-999)
+  backcalc_rows0-7050_full.csv                  all backcalculated cases (4 layers, with limits)
+  backcalc_full_with_vs_without_limits.csv      all cases, with vs without limits (ambiguous bowls)
 
   artifacts/holdout.csv                          the 20 holdout cases (made by train.py)
   data/erapave_holdout/*.txt                     ERAPave output with the ML moduli for holdout cases (optional)
 
 Writes (to frontend/public/results/):
   dataset.json   every case, compact column format
-  layers.json    4 vs 4-or-5 layers comparison
-  bounds.json    bounded vs unbounded comparison
+  bounds.json    with vs without limits: ambiguous bowls per survey and road, example bowl
   holdout.json   holdout cases for the Live Predictor dropdown,
                  incl. the ERAPave check when output files are present
 
@@ -30,8 +28,7 @@ DATA = ROOT / "data"
 OUT = ROOT / "frontend" / "public" / "results"
 
 DATASET = DATA / "backcalc_rows0-7050_full.csv"
-LAYERS = DATA / "backcalc_rows0-999_4or5L_full.csv"
-BOUNDS = DATA / "backcalc_rows0-999_4L_bounded_vs_unbounded.csv"
+BOUNDS_FULL = DATA / "backcalc_full_with_vs_without_limits.csv"   # all cases, with vs without limits
 HOLDOUT = ROOT / "artifacts" / "holdout.csv"
 ERAPAVE_DIR = DATA / "erapave_holdout"
 
@@ -100,49 +97,7 @@ def build_dataset():
                            "by_survey": summary, "columns": columnar(d[cols], dec)})
 
 
-# ------------------------------------------------------------------ 4 vs 5 layers
-def build_layers():
-    four = pd.read_csv(BOUNDS)[["row_index", "survey", "rms_pct_4L"]]
-    mix = pd.read_csv(LAYERS)[["row_index", "survey", "layers_used", "rms_pct", "rigid_depth_m"]]
-    d = four.merge(mix, on=["row_index", "survey"])
-
-    def summ(g):
-        return {"cases": int(len(g)), "good_before": pct(g.rms_pct_4L <= 5), "good_after": pct(g.rms_pct <= 5),
-                "five_layer_cases": int((g.layers_used == 5).sum())}
-
-    n5 = (d.pivot_table(index="row_index", columns="survey", values="layers_used") == 5).sum(axis=1)
-    write("layers.json", {
-        "rows": "0-999", "total": summ(d),
-        "by_survey": [{"survey": int(s), "date": SURVEYS[int(s)], **summ(g)} for s, g in d.groupby("survey")],
-        "median_depth_m": round(float(d.loc[d.layers_used == 5, "rigid_depth_m"].median()), 1),
-        "rows_any_survey": int((n5 >= 1).sum()), "rows_all_surveys": int((n5 == 4).sum()),
-    })
-
-
 # ------------------------------------------------------------------ bounded vs unbounded
-def pick_examples(r):
-    """A few clear examples of what goes wrong without limits."""
-    rules = [
-        ("E1 far above 8,000", r.sort_values("E1_unb", ascending=False), 3),
-        ("E2 far below 100", r[r.E2_unb < 98].sort_values("E2_unb"), 3),
-        ("E4 far above 400", r.sort_values("E4_unb", ascending=False), 2),
-        ("Poor fit 'fixed' by extreme values", r.assign(gain=r.rms_pct_4L - r.rms_pct_unb).sort_values("gain", ascending=False), 2),
-    ]
-    out, seen = [], set()
-    for why, g, n in rules:
-        for x in g.itertuples():
-            if len([o for o in out if o["why"] == why]) >= n:
-                break
-            if (x.row_index, x.survey) in seen:
-                continue
-            seen.add((x.row_index, x.survey))
-            out.append({"why": why, "row_index": int(x.row_index), "survey": int(x.survey),
-                        **{f"{e}_{k}": int(getattr(x, f"{e}_{k}")) for e in LIMITS for k in ("4L", "unb")},
-                        "rms_pct_4L": round(float(x.rms_pct_4L), 2), "rms_pct_unb": round(float(x.rms_pct_unb), 2)})
-    return out
-
-
-
 # ML test: model trained on bounded good fits (A) vs only the cases that are realistic
 # without limits (B). Same model and features, 5-fold split by road stretch on rows 0-999.
 # Score = RMS error (%) of the deflections calculated from the predicted moduli.
@@ -153,35 +108,136 @@ ML_FILTER_TEST = {
 }
 
 
+def unrealistic_full():
+    """Unrealistic moduli without limits for ALL Östergötland cases (None if the file is missing).
+    Unrealistic = fits the deflections without limits (RMS <= 5%) but a modulus is outside the realistic range."""
+    if not BOUNDS_FULL.exists():
+        return None
+    d = pd.read_csv(BOUNDS_FULL)
+    u = d.unrealistic_without_limits.astype(bool)
+
+    def count(g, m):
+        return {
+            "cases": int(len(g)),
+            "unrealistic": int(m.sum()),
+            "unrealistic_pct": pct(m),
+            "E1_above_8000": int((m & (g.E1_no_limits > 8000 * 1.02)).sum()),
+            "E2_below_100": int((m & (g.E2_no_limits < 100 * 0.98)).sum()),
+            "E4_above_400": int((m & (g.E4_no_limits > 400 * 1.02)).sum()),
+        }
+
+    return {
+        **count(d, u),
+        "by_survey": [{"survey": int(s), "date": SURVEYS[int(s)], **count(g, u[g.index])} for s, g in d.groupby("survey")],
+    }
+
+
+# ------------------------------------------------------------------ ambiguous bowls (for the civil-engineering story)
+EXAMPLE_CASE = (2437, 3)        # two very different pavements, both fit the bowl within 2 %
+SAME_LOCATION = 6790            # one location (road 131): clear in Sep surveys, ambiguous in Aug 2022 / May 2024
+MIN_ROAD_CASES = 300            # shorter branch roads are left out of the road table
+CAUSES = {                      # what the solver did without limits -> plain words
+    "E1_high": ("asphalt too stiff", "E1 > 8,000"),
+    "E1_low": ("asphalt too soft", "E1 < 1,500"),
+    "E2_low": ("base too soft", "E2 < 100"),
+    "E3_high": ("subbase too stiff", "E3 > 600"),
+    "E4_high": ("subgrade too stiff", "E4 > 400"),
+}
+
+
+def _causes(g):
+    """Count, per cause, the ambiguous cases where that limit was broken (a case can break several)."""
+    u = g.unrealistic_without_limits.astype(bool)
+    return {
+        "E1_high": int((u & (g.E1_no_limits > 8000 * 1.02)).sum()),
+        "E1_low": int((u & (g.E1_no_limits < 1500 * 0.98)).sum()),
+        "E2_low": int((u & (g.E2_no_limits < 100 * 0.98)).sum()),
+        "E3_high": int((u & (g.E3_no_limits > 600 * 1.02)).sum()),
+        "E4_high": int((u & (g.E4_no_limits > 400 * 1.02)).sum()),
+    }
+
+
+def ambiguity_story():
+    """Data for the 'ambiguous bowl' explanation: one bowl example, per road, one location over time."""
+    if not BOUNDS_FULL.exists():
+        return None
+    from ml.forward import forward_deflections
+
+    d = pd.read_csv(BOUNDS_FULL)
+    meas = pd.read_csv(DATASET)
+    d = d.merge(meas[["row_index", "survey", "survey_date", "thk1_mm", "thk2_mm", "thk3_mm"] + DEFL],
+                on=["row_index", "survey"], how="left")
+    d["road"] = d.key.map(road_of)
+    E = ["E1", "E2", "E3", "E4"]
+
+    # 1. one bowl, two very different answers
+    r = d[(d.row_index == EXAMPLE_CASE[0]) & (d.survey == EXAMPLE_CASE[1])].iloc[0]
+    thk = [r.thk1_mm, r.thk2_mm, r.thk3_mm]
+    measured = [abs(float(r[c])) for c in DEFL]
+
+    def answer(suffix):
+        mod = [int(r[f"{e}_{suffix}"]) for e in E]
+        bowl = list(forward_deflections(mod, thk).values())
+        rms = float(np.sqrt(np.mean([(b / m - 1) ** 2 for b, m in zip(bowl, measured)])) * 100)
+        return {"E": mod, "bowl": [round(b, 1) for b in bowl], "rms_pct": round(rms, 2)}
+
+    example = {
+        "row_index": int(r.row_index), "survey": int(r.survey), "date": SURVEYS[int(r.survey)], "road": r.road,
+        "thk_mm": [round(t) for t in thk], "offsets_mm": [int(c[1:]) for c in DEFL],
+        "measured": [round(m, 1) for m in measured],
+        "no_limits": answer("no_limits"), "limits": answer("limits"),
+    }
+
+    # 2. per road (main roads only)
+    roads = []
+    for road, g in d.groupby("road"):
+        if len(g) < MIN_ROAD_CASES:
+            continue
+        c = _causes(g)
+        main = sorted(c, key=c.get, reverse=True)[:2]
+        roads.append({
+            "road": road, "locations": int(g.row_index.nunique()), "km": round(g.row_index.nunique() * 0.02, 1),
+            "cases": int(len(g)), "ambiguous": int(g.unrealistic_without_limits.sum()),
+            "ambiguous_pct": pct(g.unrealistic_without_limits),
+            "by_survey": [pct(g[g.survey == s].unrealistic_without_limits) for s in sorted(SURVEYS)],
+            "main_causes": [{"key": k, "text": CAUSES[k][0], "rule": CAUSES[k][1], "cases": c[k]} for k in main if c[k] > 0],
+            "thk_mm": [int(g[f"thk{i}_mm"].median()) for i in (1, 2, 3)],
+        })
+    roads.sort(key=lambda x: -x["ambiguous_pct"])
+    left_out = d.groupby("road").size()
+    left_out = left_out[left_out < MIN_ROAD_CASES]
+
+    # 3. one location, four surveys
+    loc = d[d.row_index == SAME_LOCATION].sort_values("survey")
+    same_location = {
+        "row_index": SAME_LOCATION, "road": loc.road.iloc[0],
+        "surveys": [{
+            "survey": int(x.survey), "date": SURVEYS[int(x.survey)], "ambiguous": bool(x.unrealistic_without_limits),
+            "no_limits": [int(getattr(x, f"{e}_no_limits")) for e in E],
+            "limits": [int(getattr(x, f"{e}_limits")) for e in E],
+            "rms_no_limits": round(float(x.rms_no_limits_pct), 2), "rms_limits": round(float(x.rms_limits_pct), 2),
+        } for x in loc.itertuples()],
+    }
+
+    return {
+        "example": example, "roads": roads,
+        "roads_left_out": {"roads": int(len(left_out)), "cases": int(left_out.sum())},
+        "causes_total": {k: {"text": v[0], "rule": v[1], "cases": _causes(d)[k]} for k, v in CAUSES.items()},
+        "same_location": same_location,
+    }
+
+
 def build_bounds():
-    d = pd.read_csv(BOUNDS)  # all cases; cases that never hit a limit keep the same values unbounded
-
-    def summ(g):
-        return {"cases": int(len(g)), "good_before": pct(g.rms_pct_4L <= 5), "good_after": pct(g.rms_pct_unb <= 5)}
-
-    inside = np.logical_and.reduce([
-        (d[f"{e}_unb"] >= lo * 0.98) & (d[f"{e}_unb"] <= hi * 1.02) for e, (lo, hi) in LIMITS.items()
-    ])
-    good_unb = d.rms_pct_unb <= 5
-    good_4l = d.rms_pct_4L <= 5
-
+    """With vs without limits, all Östergötland cases."""
+    full = unrealistic_full()
+    if full is None:
+        print(f"skipped bounds.json: {BOUNDS_FULL.relative_to(ROOT)} not found")
+        return
     write("bounds.json", {
-        "rows": "0-999", "total": summ(d),
-        "by_survey": [{"survey": int(s), "date": SURVEYS[int(s)], **summ(g)} for s, g in d.groupby("survey")],
-        "recalculated": int(d.recalculated.sum()),
-        "good_bounded": int(good_4l.sum()),
-        "good_unbounded": int(good_unb.sum()),
-        "realistic_unbounded": int((good_unb & inside).sum()),
-        "realistic_unbounded_pct": pct(good_unb & inside),
-        "E1_above_8000": int((d.E1_unb > 8000 * 1.02).sum()),
-        "E1_unb_p95": int(round(d.E1_unb.quantile(0.95), -2)),
-        "E2_below_100": int((d.E2_unb < 100 * 0.98).sum()),
-        "E2_unb_min": int(d.E2_unb.min()),
-        "E4_above_400": int((d.E4_unb > 400 * 1.02).sum()),
-        "above_50000": int((d[[f"{e}_unb" for e in LIMITS]] >= 50000).any(axis=1).sum()),
-        "ml_filter_test": ML_FILTER_TEST,
         "limits": LIMITS,
-        "examples": pick_examples(d[d.recalculated == 1]),
+        "full": full,
+        "story": ambiguity_story(),
+        "ml_filter_test": ML_FILTER_TEST,
     })
 
 
@@ -300,6 +356,5 @@ def build_holdout():
 
 if __name__ == "__main__":
     build_dataset()
-    build_layers()
     build_bounds()
     build_holdout()
