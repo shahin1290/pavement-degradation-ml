@@ -4,6 +4,7 @@ import { Box, ButtonBase, Typography } from '@mui/material';
 import Section from '../components/Section';
 import SummaryTab from '../components/results/SummaryTab';
 import ExploreTab from '../components/results/ExploreTab';
+import LimitsCompareTab from '../components/results/LimitsCompareTab';
 
 // The first entry opens by default.
 // To add a view: build its JSON in make_results_data.py,
@@ -11,6 +12,7 @@ import ExploreTab from '../components/results/ExploreTab';
 const VIEWS = [
   { id: 'cases', icon: '📋', label: 'Backcalculated cases', component: ExploreTab },
   { id: 'process', icon: '🧭', label: 'How the data was built', component: SummaryTab },
+  { id: 'limits', icon: '⚖️', label: 'Compare limits', component: LimitsCompareTab },
 ];
 
 /** Compact segmented switch: one pill per view, the active one filled. */

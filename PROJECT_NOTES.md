@@ -1,6 +1,6 @@
 # Project notes — ML prediction of pavement layer moduli from TSD
 
-_Last updated: 12 Oct 2026. Start every new Claude chat with: "Read PROJECT_NOTES.md in my repo."_
+_Last updated: 13 Oct 2026. Start every new Claude chat with: "Read PROJECT_NOTES.md in my repo."_
 
 ## 1. Goal (one paragraph)
 Predict the layer moduli **E1 (asphalt), E2 (base), E3 (subbase), E4 (subgrade)** directly from a
@@ -24,11 +24,21 @@ User preferences: simple English, simple attractive UI, one-line git commit mess
 ## 3. Backcalculation (our own, matches ERAPAVE)
 - 4-layer linear elastic (MLET, Hankel transform), bounded least squares in log space.
 - Load **50 kN per wheel** (ERAPAVE 100 kN axle), contact pressure 800 kPa.
-- **Limits (MPa): E1 1,500–8,000 · E2 100–3,000 · E3 50–600 · E4 30–400.**
+- **NEW limits (decided 13 Oct 2026), use from now on (MPa):**
+
+  | Layer | New limits | Old limits (all results below were made with these) |
+  |---|---|---|
+  | E1 asphalt | **1,500 – 10,000** | 1,500 – 8,000 |
+  | E2 base | **200 – 1,000** | 100 – 3,000 |
+  | E3 subbase | **100 – 1,000** | 50 – 600 |
+  | E4 subgrade | **30 – 2,000** | 30 – 400 |
+
+  ⚠ Every number in sections 3–5 (37 % unrealistic, 23,642 usable, model errors, reliability AUC,
+  coverage) comes from the OLD limits. They must be recomputed (see section 8, "Switch to new limits").
 - Scripts: `backcalc.py`, `lsolver.py`, `export.py` (backup zip, folder `bc/`).
 - Checked against ERAPAVE: e.g. row 1876 S1 → ERAPAVE RMS 2.46 %, moduli 1,697/131/108/152.
 
-### Why limits (key finding)
+### Why limits (key finding — numbers with the OLD limits)
 Without limits, many bowls still fit well (RMS ≤ 5 %) but give **physically unrealistic** moduli
 (> 2 % outside limits) because layers trade off against each other (**non-uniqueness**).
 - Full data: **10,418 / 28,188 = 37.0 % unrealistic** without limits.
@@ -41,11 +51,40 @@ Without limits, many bowls still fit well (RMS ≤ 5 %) but give **physically un
   (E2 127–136), ambiguous in Aug 2022 / May 2024 (E2 36 / 64 without limits, 100 with limits).
 - By road: road 796 (8.6 km) ambiguous 90 % in every survey (stiff asphalt + very soft base) → layer data in
   the database probably wrong (check cores). Other main roads 22–41 %.
+- Limits never improve the fit (0 bowls fit better with limits); they keep it equal (realistic bowls) or
+  slightly worse, and select the realistic answer among answers that fit within measurement noise.
 - Wording: call these "ambiguous bowls" (limit-dependent), not "errors". Keep them in training
   (rows 0–999 test: without them, error on ambiguous bowls 8.0 % vs 6.1 % with them).
 - Limits only change those unrealistic cases; all others keep identical values.
 - File: `data/backcalc_full_with_vs_without_limits.csv`
   (row_index, key, survey, E1–E4_limits, rms_limits_pct, E1–E4_no_limits, rms_no_limits_pct, unrealistic_without_limits).
+
+### Validation against ELMOD (12–13 Oct 2026, 9-geophone F25 files, 141 mm / 800 kPa)
+Fits below = RMS on the real 9-point bowl, calculated with our forward model.
+
+| Row, survey | Road | Type | ELMOD E1/E2/E3/E4 (fit) | Ours no limits (fit) | Ours old limits (fit) |
+|---|---|---|---|---|---|
+| 2437 S3 | 131 | base soft | 4,741/77/77/216 (1.39 %) | 5,429/21/80,072/87 (1.12 %) | 4,530/100/66/225 (1.53 %) |
+| 6791 S4 | 131 | base soft | 4,804/81/78/190 (0.85 %) | 5,215/48/124/173 (0.64 %) | 4,616/100/70/199 (0.86 %) |
+| 715 S4 | 32 | asphalt stiff | 17,856/1,382/68/186 (0.57 %) | 18,353/1,340/71/181 (0.48 %) | 8,000/2,173/55/241 (1.15 %) |
+| 4855 S4 | 796 | asphalt extreme | 76,864/764/51/212 (0.97 %) | 100,000/248/87/178 (0.75 %) | 8,000/2,263/50/207 (4.04 %) |
+| 1353 S4 | 50 | asphalt stiff | 15,600/1,159/78/166 (0.86 %) | 18,409/1,054/81/161 (0.81 %) | 8,000/1,589/72/182 (1.28 %) |
+| 3021 S2 | 131 | asphalt stiff | 10,988/788/78/71 (1.26 %) | 12,376/746/80/71 (0.97 %) | 8,000/956/73/73 (1.21 %) |
+
+- Our solver finds the same solution type as ELMOD in all 6 cases (within a few %).
+- ELMOD stays realistic for soft-base bowls (E2 ≈ 80) but gives impossible asphalt (11,000–77,000 MPa at
+  22–28 °C) in all 4 stiff-asphalt bowls, without warning → supports fixed limits + reliability flag.
+- Row 4855 (road 796): realistic answer fits clearly worse; even with asphalt 200 mm instead of 91 mm, E1 stays
+  at the limit → probably a bound/stabilised layer missing from the database.
+- Still to run in ELMOD: control case row 1876 S1 (clear bowl, ours 1,697/131/108/152).
+- Files: `f25_from_case.py ROW SURVEY PREFIX` (copies the header of a working ELMOD F25 "one.f25").
+  ELMOD needs thicknesses entered by hand; Poisson 0.35/0.35/0.35/0.40, no stiff layer.
+
+### Temperature (BELLS)
+- File is "temp_korr", but D0000 = D00001 and SCI_300 ≈ SCI300_norm (0.3 %) → no uncorrected bowl in the files.
+- All bowls: E1 vs BELLS ρ ≈ −0.01. Same location across surveys: E1 **−3.4 % per °C** (physically expected);
+  same survey + road: +3.1 % per °C (confounded). → ask VTI what "temp_korr" corrects and the reference temperature.
+- Chart: `E1_vs_BELLS_temperature.png`.
 
 ## 4. ML model (modulus prediction)
 - `HistGradientBoostingRegressor` (max_iter 600, lr 0.05), one per target, trained on log(E).
@@ -92,12 +131,30 @@ Without limits, many bowls still fit well (RMS ≤ 5 %) but give **physically un
 3. **Moduli → cracking** — weak (AUC 0.72 → 0.75). Low priority.
 
 ## 8. Open next steps
+
+### Switch to new limits (do first)
+- [ ] `bc/backcalc.py`: `LIMITS = [(1500, 10000), (200, 1000), (100, 1000), (30, 2000)]`; rerun all 28,188 bowls.
+- [ ] Rerun the with/without-limits comparison → new `backcalc_full_with_vs_without_limits.csv`
+      (unrealistic = outside the NEW limits by > 2 %; the no-limits run itself does not change).
+- [ ] `ml/config.py` `MODULUS_LIMITS`; frontend `LAYER_LIMITS` (PredictorPage.jsx) and `LIMITS` (results/common.jsx).
+- [ ] `python train.py` → `python train_reliability.py` → `python make_results_data.py`; redeploy Cloud Run.
+- [ ] New ERAPAVE check of the 20 holdout cases (`make_erapave_holdout_dat.py`), replace `data/erapave_holdout/`.
+- [ ] Update all numbers in this file (unrealistic %, usable bowls, model errors, AUC, coverage).
+- [ ] Quick estimate from the existing no-limits run (13 Oct): outside NEW limits = **18,507 / 28,188 = 65.7 %**
+      (old limits 36.8 %). Mostly E2 < 200 (10,791 bowls; median free E2 = 232) and E3 < 100 (9,677; median 121).
+      E4 > 2,000 only 62. By survey: 86.6 / 54.2 / 63.4 / 58.5 %. → discuss with professor before the full rerun.
+- [ ] Watch: E2 min 200 is higher than ELMOD's soft-base answers (77–81) → more bowls will sit at E2 = 200;
+      E4 max 2,000 lets the subgrade go much stiffer than before. Check how many bowls end at a limit or become poor fits.
+
+### Other
 - [ ] Thesis notebook for idea 1: calibration plot, coverage plot, SHAP of the classifier.
 - [ ] Chart RMS vs fixed E3 (row 427) to show non-uniqueness.
 - [ ] Idea 2 notebooks (seasonal effect) + ask VTI about TSD calibration 2023 vs 2024.
 - [ ] Backcalculate Västergötland, test model on it, then retrain with both regions.
 - [ ] Fix git user.email config on the laptop.
 - [ ] Link moduli + reliability to the digital twin (WP roadmap).
+- [ ] Ask VTI: meaning of "temp_korr", reference temperature, uncorrected deflections, thickness source for road 796.
+- [ ] Optional experiments: merge base + subbase (3 layers), or fix E1 from temperature, to reduce ambiguity.
 
 ## 9. Rebuild from scratch
 ```bash
