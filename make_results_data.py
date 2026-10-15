@@ -72,8 +72,9 @@ def pct(x):
 
 
 # ------------------------------------------------------------------ dataset
-def build_dataset():
-    d = pd.read_csv(DATASET).sort_values(["row_index", "survey"])
+def build_dataset(src=DATASET, out="dataset.json", limits=LIMITS, label="Before (original bowls, old limits)"):
+    """All backcalculated cases in compact column form (one file per limit option)."""
+    d = pd.read_csv(src).sort_values(["row_index", "survey"])
     d["road"] = d["key"].map(road_of)
     d["at_limit"] = d["at_limit"].fillna("")
     cols = ["row_index", "key", "road", "survey", "chainage_m", "asphalt_temp_C",
@@ -88,12 +89,12 @@ def build_dataset():
             "survey": int(s), "date": SURVEYS.get(int(s), ""), "cases": int(len(g)),
             "good_fit_pct": pct(g.poor_fit == 0), "median_rms": round(float(g.rms_pct.median()), 2),
             "position_mismatch": int(g.position_mismatch.sum()),
-            **{f"{e}_median": int(g.loc[g.poor_fit == 0, e].median()) for e in LIMITS},
+            **{f"{e}_median": int(g.loc[g.poor_fit == 0, e].median()) for e in limits},
         })
     total = {"cases": int(len(d)), "good_fit": int((d.poor_fit == 0).sum()),
              "poor_fit": int(d.poor_fit.sum()), "position_mismatch": int(d.position_mismatch.sum()),
              "median_rms": round(float(d.rms_pct.median()), 2), "roads": int(d.road.nunique())}
-    write("dataset.json", {"surveys": SURVEYS, "limits": LIMITS, "total": total,
+    write(out, {"label": label, "surveys": SURVEYS, "limits": limits, "total": total,
                            "by_survey": summary, "columns": columnar(d[cols], dec)})
 
 
@@ -171,6 +172,70 @@ def build_bounds():
 
 
 # ------------------------------------------------------------------ ERAPave output files
+# ------------------------------------------------------------------ limit options (temperature-corrected bowls)
+LIMITS_DIR = DATA / "limits_compare"      # files made by step2_limits.py
+LIMIT_OPTIONS = [                         # id, label, limits (MPa)
+    ("new", "New", {"E1": (1500, 10000), "E2": (200, 1000), "E3": (100, 1000), "E4": (30, 2000)}),
+    ("middle", "Middle", {"E1": (1500, 10000), "E2": (150, 1000), "E3": (75, 1000), "E4": (30, 2000)}),
+    ("comp", "Compromise", {"E1": (1500, 10000), "E2": (100, 1000), "E3": (50, 1000), "E4": (30, 2000)}),
+]
+
+
+def _option_summary(t, w, limits):
+    """Usable / at-limit / unrealistic shares for one limit option, overall, per survey and per road."""
+    t = t.assign(road=t.key.map(road_of), usable=t.rms_pct <= 5, at_lim=t.at_limit.fillna("") != "")
+    w = w.assign(road=w.key.map(road_of))
+
+    def shares(tt, ww):
+        return {"bowls": int(len(tt)), "usable": int(tt.usable.sum()), "usable_pct": pct(tt.usable),
+                "usable7_pct": pct(tt.rms_pct <= 7), "at_limit_pct": pct(tt.at_lim),
+                "unrealistic_pct": pct(ww.unrealistic_without_limits)}
+
+    hits = t.at_limit.fillna("").str.split(";").explode()
+    good = t[t.usable]
+    roads = []
+    for r, g in t.groupby("road"):
+        if len(g) >= 300:
+            roads.append({"road": r, "km": round(g.row_index.nunique() * 0.02, 1), **shares(g, w[w.road == r])})
+    return {
+        "limits": limits,
+        "total": shares(t, w),
+        "by_survey": [{"survey": int(s), "date": SURVEYS[int(s)], **shares(g, w[w.survey == s])} for s, g in t.groupby("survey")],
+        "by_road": sorted(roads, key=lambda x: x["usable_pct"]),
+        "limit_hits": {k: int(v) for k, v in hits[hits != ""].value_counts().items()},
+        "median": {e: int(good[e].median()) for e in LIMITS},
+    }
+
+
+def build_option_datasets():
+    """dataset_<id>.json for each limit option (temperature-corrected bowls), for the cases table."""
+    for oid, label, limits in LIMIT_OPTIONS:
+        src = LIMITS_DIR / f"backcalc_tempcorr_{oid}_full.csv"
+        if src.exists():
+            build_dataset(src, f"dataset_{oid}.json", limits, f"{label} limits (deflections corrected to 20 °C)")
+
+
+def build_limits_compare():
+    if not LIMITS_DIR.exists():
+        print(f"skipped limits_compare.json: {LIMITS_DIR.relative_to(ROOT)} not found")
+        return
+    options = []
+    for oid, label, limits in LIMIT_OPTIONS:
+        tp = LIMITS_DIR / f"backcalc_tempcorr_{oid}_full.csv"
+        wp = LIMITS_DIR / f"backcalc_full_with_vs_without_limits_{oid}.csv"
+        if not (tp.exists() and wp.exists()):
+            print(f"  limits_compare: {oid} files missing, skipped")
+            continue
+        options.append({"id": oid, "label": label, **_option_summary(pd.read_csv(tp), pd.read_csv(wp), limits)})
+    baseline = None
+    if DATASET.exists() and BOUNDS_FULL.exists():
+        baseline = {"label": "Before (original bowls, old limits)",
+                    **_option_summary(pd.read_csv(DATASET), pd.read_csv(BOUNDS_FULL), LIMITS)}
+    write("limits_compare.json", {"note": "Deflections temperature-corrected to 20 C (Park et al. 2002), "
+                                          "all bowls backcalculated again; only the limits differ.",
+                                  "options": options, "baseline": baseline})
+
+
 def read_erapave_output(path):
     """
     Read one ERAPave output file (the "SUMMARY OF INPUT DATA ..." text).
@@ -287,3 +352,5 @@ if __name__ == "__main__":
     build_dataset()
     build_bounds()
     build_holdout()
+    build_limits_compare()
+    build_option_datasets()

@@ -2,10 +2,19 @@ import { useMemo, useState } from 'react';
 import { Box, Button, Chip, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 
 import { toRows, toCsv, downloadCsv } from '../../services/results';
-import { useResults, Loading, SimpleTable, fmt, LIMITS } from './common';
+import { useResults, Loading, SimpleTable, fmt, fmtPct } from './common';
 
 const DEFL = ['D0', 'D130', 'D215', 'D300', 'D450', 'D600', 'D900', 'D1200', 'D1500'];
 const SURVEY_DATE = { 1: 'Aug 2022', 2: 'Sep 2023', 3: 'May 2024', 4: 'Sep 2024' };
+
+// Which backcalculation to show: file name in public/results/ (built by make_results_data.py)
+const OPTIONS = [
+  { id: 'comp', file: 'dataset_comp', label: 'Compromise' },
+  { id: 'middle', file: 'dataset_middle', label: 'Middle' },
+  { id: 'new', file: 'dataset_new', label: 'New' },
+  { id: 'before', file: 'dataset', label: 'Before (old)' },
+];
+const limitText = (l) => ['E1', 'E2', 'E3', 'E4'].map((e) => `${e} ${fmt(l[e][0])}–${fmt(l[e][1])}`).join(' · ');
 
 /** Case in the shape the predictor page expects */
 function toPredictorCase(r) {
@@ -19,8 +28,8 @@ function toPredictorCase(r) {
 }
 
 /** Modulus value; orange when it sits on a limit. */
-function Modulus({ e, v }) {
-  const [lo, hi] = LIMITS[e];
+function Modulus({ e, v, limits }) {
+  const [lo, hi] = limits[e];
   const at = v <= lo * 1.005 ? 'lower' : v >= hi * 0.995 ? 'upper' : null;
   if (!at) return fmt(v);
   return (
@@ -31,7 +40,9 @@ function Modulus({ e, v }) {
 }
 
 function ExploreTab({ onOpenInPredictor }) {
-  const { data, error } = useResults('dataset');
+  const [optId, setOptId] = useState(OPTIONS[0].id);
+  const opt = OPTIONS.find((o) => o.id === optId);
+  const { data, error } = useResults(opt.file);
   const rows = useMemo(() => (data ? toRows(data.columns) : []), [data]);
   const [survey, setSurvey] = useState('all');
   const [fit, setFit] = useState('all');
@@ -40,7 +51,15 @@ function ExploreTab({ onOpenInPredictor }) {
     (survey === 'all' || r.survey === survey)
     && (fit === 'all' || (fit === 'good' ? !r.poor_fit : r.poor_fit))), [rows, survey, fit]);
 
-  if (!data) return <Loading error={error} />;
+  const picker = (
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center', mb: 2 }}>
+      <Typography variant="body2" sx={{ fontWeight: 700 }}>Limits:</Typography>
+      <ToggleButtonGroup size="small" exclusive value={optId} onChange={(_, v) => v && setOptId(v)} color="primary">
+        {OPTIONS.map((o) => <ToggleButton key={o.id} value={o.id} sx={{ px: 2 }}>{o.label}</ToggleButton>)}
+      </ToggleButtonGroup>
+    </Box>
+  );
+  if (!data) return <>{picker}<Loading error={error} /></>;
 
   const columns = [
     {
@@ -60,7 +79,7 @@ function ExploreTab({ onOpenInPredictor }) {
       ),
     },
     { key: 'asphalt_temp_C', label: 'Temp (°C)', format: (v) => fmt(v, 1) },
-    ...['E1', 'E2', 'E3', 'E4'].map((e) => ({ key: e, label: e, format: (v) => <Modulus e={e} v={v} /> })),
+    ...['E1', 'E2', 'E3', 'E4'].map((e) => ({ key: e, label: e, format: (v) => <Modulus e={e} v={v} limits={data.limits} /> })),
     {
       key: 'rms_pct', label: 'Fit (RMS)', align: 'center',
       format: (v, r) => (
@@ -88,8 +107,17 @@ function ExploreTab({ onOpenInPredictor }) {
 
   return (
     <>
+      {picker}
+      <Box sx={{ p: 1.5, mb: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
+        <Typography variant="body2"><b>{data.label || opt.label}</b></Typography>
+        <Typography variant="body2" color="text.secondary">Limits (MPa): {limitText(data.limits)}</Typography>
+        <Typography variant="body2" sx={{ mt: 0.5 }}>
+          <b>{fmt(data.total.good_fit)}</b> of {fmt(data.total.cases)} cases fit within 5%{' '}
+          (<b>{fmtPct((100 * data.total.good_fit) / data.total.cases)}</b>), median fit {fmt(data.total.median_rms, 2)}%.
+        </Typography>
+      </Box>
       <Typography color="text.secondary" sx={{ mb: 1 }}>
-        All backcalculated Östergötland cases (4 layers, with limits). Moduli E1–E4 in MPa. Click <strong>Predict</strong> to
+        All backcalculated Östergötland cases (4 layers). Moduli E1–E4 in MPa. Click <strong>Predict</strong> to
         compare the ML model with the backcalculation for any case.
       </Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', mb: 2 }}>
@@ -112,7 +140,7 @@ function ExploreTab({ onOpenInPredictor }) {
         <Typography variant="body2" color="text.secondary">{fmt(filtered.length)} cases</Typography>
         <Box sx={{ flexGrow: 1 }} />
         <Button size="small" variant="outlined"
-          onClick={() => downloadCsv('backcalc_results.csv', toCsv(filtered, Object.keys(data.columns)))}>
+          onClick={() => downloadCsv(`backcalc_results_${opt.id}.csv`, toCsv(filtered, Object.keys(data.columns)))}>
           Download CSV
         </Button>
       </Box>

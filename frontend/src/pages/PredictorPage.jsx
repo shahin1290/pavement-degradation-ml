@@ -4,8 +4,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableRow,
 } from '@mui/material';
 
-import { alpha } from '@mui/material/styles';
-
 import Section from '../components/Section';
 import ErapaveCheck from '../components/ErapaveCheck';
 import { predictModuli, getModelInfo } from '../services/api';
@@ -185,7 +183,7 @@ function PredictorPage({ preset }) {
           </Alert>
         )}
 
-        {result && <Results result={result} />}
+        {result && <Results result={result} reference={example?.backcalc} />}
 
         {example?.erapave && <ErapaveCheck check={example.erapave} measured={example.inputs} predicted={result} />}
       </Section>
@@ -195,27 +193,7 @@ function PredictorPage({ preset }) {
   );
 }
 
-// Allowed range per layer (MPa), same limits as the backcalculation; used to draw the range bar
-const LAYER_LIMITS = { E1: [1500, 8000], E2: [100, 3000], E3: [50, 600], E4: [30, 400] };
-
-// How precisely a layer is known, from the width of its range (high / low)
-const PRECISION = [
-  { max: 1.35, color: 'success', label: 'Well determined' },
-  { max: 1.8, color: 'info', label: 'Fairly determined' },
-  { max: Infinity, color: 'warning', label: 'Poorly determined' },
-];
-
-// Can this measurement be trusted? From the chance of unrealistic moduli for similar bowls.
-const TRUST = [
-  { max: 0.2, color: 'success', title: 'Trustworthy measurement', icon: '✓' },
-  { max: 0.5, color: 'info', title: 'Use with some care', icon: '◐' },
-  { max: 1.01, color: 'warning', title: 'Use with caution', icon: '⚠' },
-];
-
-const fmtMPa = (v) => Math.round(v).toLocaleString();
-
-function Results({ result }) {
-  const rel = result.reliability;
+function Results({ result, reference }) {
   return (
     <Box sx={{ mt: 4 }}>
       <Typography variant="h6" gutterBottom>
@@ -228,88 +206,59 @@ function Results({ result }) {
         </Alert>
       ))}
 
-      {rel && <TrustBanner rel={rel} />}
+      {result.reliability && <ReliabilityBanner rel={result.reliability} />}
 
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' } }}>
-        {MODULI.map((m) => (
-          <ModulusCard key={m.key} label={m.label} target={m.target} value={result[m.key]} range={rel?.ranges_MPa?.[m.target]} />
-        ))}
+      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' } }}>
+        {MODULI.map((m) => {
+          const value = result[m.key];
+          const ref = reference?.[m.target];
+          const diff = ref ? ((value / ref - 1) * 100).toFixed(0) : null;
+          const range = result.reliability?.ranges_MPa?.[m.target];
+          return (
+            <Paper key={m.key} variant="outlined" sx={{ p: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                {m.label}
+              </Typography>
+              <Typography variant="h5">{Math.round(value).toLocaleString()} MPa</Typography>
+              {range && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                  likely {range[0].toLocaleString()} – {range[1].toLocaleString()}
+                </Typography>
+              )}
+              {ref && (
+                <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 0.5 }}>
+                  Backcalculated: {ref.toLocaleString()} MPa ({diff > 0 ? '+' : ''}{diff}%)
+                </Typography>
+              )}
+            </Paper>
+          );
+        })}
       </Box>
-
-      {rel && (
-        <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 1.5 }}>
-          <b>Expected range</b>: the true layer modulus falls inside this range for about {Math.round(rel.coverage * 100)}
-          {' '}of 100 similar measurements. A narrow range means the deflection bowl pins the layer down well; a wide range
-          means several values fit the bowl almost equally well. The bar shows the range within the allowed limits for the layer.
-        </Typography>
-      )}
     </Box>
   );
 }
 
-/** One layer: predicted value, highlighted expected range with a bar, and how precisely it is known. */
-function ModulusCard({ label, target, value, range }) {
-  const [lo, hi] = LAYER_LIMITS[target];
-  const pos = (v) => `${(100 * (Math.log(v) - Math.log(lo))) / (Math.log(hi) - Math.log(lo))}%`;
-  const precision = range ? PRECISION.find((p) => range[1] / range[0] <= p.max) : null;
-  return (
-    <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
-        <Typography variant="body2" color="text.secondary">{label}</Typography>
-        {precision && <Chip size="small" variant="outlined" color={precision.color} label={precision.label} />}
-      </Box>
-      <Typography variant="h5">{fmtMPa(value)} MPa</Typography>
+/** Is this measurement suitable for backcalculation? Shown above the moduli. */
+const RELIABILITY_LEVELS = [
+  // p_unreliable below `max` -> this level
+  { max: 0.2, severity: 'success', chip: '✓ Reliable measurement', text: (p) => `Low risk (${p}%) that backcalculation gives unrealistic moduli for this bowl.` },
+  { max: 0.5, severity: 'info', chip: '◐ Uncertain measurement', text: (p) => `Moderate risk (${p}%) of unrealistic moduli. Check the ranges below.` },
+  { max: 1.01, severity: 'warning', chip: '⚠ Unreliable measurement', text: (p) => `High risk (${p}%) that backcalculation gives unrealistic moduli for this bowl. Treat the values with care.` },
+];
 
-      {range && (
-        <Box sx={{ p: 1.25, borderRadius: 2, bgcolor: (t) => alpha(t.palette[precision.color].main, 0.08) }}>
-          <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 }}>
-            Expected range
-          </Typography>
-          <Typography sx={{ fontWeight: 800, color: `${precision.color}.main`, fontSize: '1.05rem' }}>
-            {fmtMPa(range[0])} – {fmtMPa(range[1])} MPa
-          </Typography>
-          {/* range bar on a log scale between the allowed limits */}
-          <Box sx={{ position: 'relative', height: 8, mt: 1, borderRadius: 4, bgcolor: 'divider' }}>
-            <Box sx={{
-              position: 'absolute', top: 0, bottom: 0, borderRadius: 4, bgcolor: `${precision.color}.main`, opacity: 0.55,
-              left: pos(Math.max(range[0], lo)), right: `calc(100% - ${pos(Math.min(range[1], hi))})`,
-            }} />
-            <Box sx={{
-              position: 'absolute', top: '50%', width: 12, height: 12, borderRadius: '50%', bgcolor: 'text.primary',
-              border: '2px solid #fff', transform: 'translate(-50%, -50%)', left: pos(Math.min(Math.max(value, lo), hi)),
-            }} />
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-            <Typography variant="caption" color="text.secondary">{fmtMPa(lo)}</Typography>
-            <Typography variant="caption" color="text.secondary">{fmtMPa(hi)}</Typography>
-          </Box>
-        </Box>
-      )}
-    </Paper>
-  );
-}
-
-/** Can this measurement be trusted? Plain-language explanation of the reliability check. */
-function TrustBanner({ rel }) {
+function ReliabilityBanner({ rel }) {
   const pct = Math.round(rel.p_unreliable * 100);
-  const level = TRUST.find((l) => rel.p_unreliable < l.max);
+  const cov = Math.round(rel.coverage * 100);
+  const level = RELIABILITY_LEVELS.find((l) => rel.p_unreliable < l.max);
   return (
-    <Paper
-      variant="outlined"
-      sx={{ p: 2, mb: 2, borderLeft: 5, borderColor: `${level.color}.main`, bgcolor: (t) => alpha(t.palette[level.color].main, 0.06) }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-        <Typography sx={{ fontWeight: 800, color: `${level.color}.main` }}>{level.icon} {level.title}</Typography>
-        <Chip size="small" color={level.color} label={`${pct}% risk`} />
+    <Alert severity={level.severity} icon={false} sx={{ mb: 2, alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+        <Chip size="small" color={level.severity} label={level.chip} />
+        <Typography variant="body2">
+          {level.text(pct)} The ranges below contain the true value in about {cov}% of cases.
+        </Typography>
       </Box>
-      <Typography variant="body2" sx={{ mt: 0.75 }}>
-        Of earlier measurements with a similar deflection bowl, <b>{pct} in 100</b> could only be explained with
-        unrealistic layer stiffness (outside the normal range for asphalt, base or soil).
-        {level.color === 'success' && ' This bowl looks like a normal road, so the values below are meaningful.'}
-        {level.color === 'info' && ' Look at the expected ranges before using the values.'}
-        {level.color === 'warning' && ' Something may be unusual here (e.g. wrong layer thickness or a damaged layer); check before using the values.'}
-      </Typography>
-    </Paper>
+    </Alert>
   );
 }
 
