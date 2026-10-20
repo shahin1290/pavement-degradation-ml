@@ -69,10 +69,10 @@ export const VARIABLE_GROUPS = [
   {
     title: 'Layer moduli — targets of the ML model',
     items: [
-      { code: 'E1 (E_AC)', text: 'Asphalt layer modulus, MPa (limits 1,500-8,000).', role: 'target' },
-      { code: 'E2 (E_base / MR2)', text: 'Base layer modulus, MPa (limits 100-3,000).', role: 'target' },
-      { code: 'E3 (E_subbase / MR3)', text: 'Subbase layer modulus, MPa (limits 50-600).', role: 'target' },
-      { code: 'E4 (E_subgrade / MR4)', text: 'Subgrade modulus, MPa (limits 30-400).', role: 'target' },
+      { code: 'E1 (E_AC)', text: 'Asphalt layer modulus at 20 °C, MPa (limits 1,500-10,000).', role: 'target' },
+      { code: 'E2 (E_base / MR2)', text: 'Base layer modulus, MPa (limits 100-1,000).', role: 'target' },
+      { code: 'E3 (E_subbase / MR3)', text: 'Subbase layer modulus, MPa (limits 50-1,000).', role: 'target' },
+      { code: 'E4 (E_subgrade / MR4)', text: 'Subgrade modulus, MPa (limits 30-2,000).', role: 'target' },
     ],
   },
 ];

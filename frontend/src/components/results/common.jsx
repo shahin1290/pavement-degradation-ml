@@ -77,7 +77,7 @@ export function SimpleTable({ columns, rows, highlight, perPage }) {
 }
 
 // Modulus limits used in the backcalculation (MPa)
-export const LIMITS = { E1: [1500, 8000], E2: [100, 3000], E3: [50, 600], E4: [30, 400] };
+export const LIMITS = { E1: [1500, 10000], E2: [100, 1000], E3: [50, 1000], E4: [30, 2000] };   // compromise limits
 
 export const fmt =(v, d = 0) => (v == null ? '–' : Number(v).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d }));
 export const fmtPct = (v) => (v == null ? '–' : `${Number(v).toFixed(1)}%`);

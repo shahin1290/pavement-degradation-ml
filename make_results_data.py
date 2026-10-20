@@ -2,8 +2,12 @@
 Build the JSON files shown on the frontend "Results" page.
 
 Reads (from data/):
-  backcalc_rows0-7050_full.csv                  all backcalculated cases (4 layers, with limits)
-  backcalc_full_with_vs_without_limits.csv      all cases, with vs without limits
+  backcalc_rows0-7050_full.csv                  all backcalculated cases = ML training data
+                                                (deflections corrected to 20 C with the own-data coefficients,
+                                                 compromise limits)
+  backcalc_full_with_vs_without_limits.csv      the same cases, with vs without limits
+  before_tempcorr/                              the run before the correction (original bowls, old limits)
+  limits_compare/, limits_compare_own/          all limit options, Park statewide / own-data correction
 
   artifacts/holdout.csv                          the 20 holdout cases (made by train.py)
   data/erapave_holdout/*.txt                     ERAPave output with the ML moduli for holdout cases (optional)
@@ -27,14 +31,19 @@ ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
 OUT = ROOT / "frontend" / "public" / "results"
 
-DATASET = DATA / "backcalc_rows0-7050_full.csv"
+DATASET = DATA / "backcalc_rows0-7050_full.csv"                    # training data (own-data correction, compromise)
 BOUNDS_FULL = DATA / "backcalc_full_with_vs_without_limits.csv"   # all cases, with vs without limits
+BEFORE_DIR = DATA / "before_tempcorr"                              # original bowls, old limits
+BEFORE_DATASET = BEFORE_DIR / "backcalc_rows0-7050_full.csv"
+BEFORE_BOUNDS = BEFORE_DIR / "backcalc_full_with_vs_without_limits.csv"
 HOLDOUT = ROOT / "artifacts" / "holdout.csv"
 ERAPAVE_DIR = DATA / "erapave_holdout"
 
 DEFL = ["D0", "D130", "D215", "D300", "D450", "D600", "D900", "D1200", "D1500"]
 SURVEYS = {1: "Aug 2022", 2: "Sep 2023", 3: "May 2024", 4: "Sep 2024"}
-LIMITS = {"E1": (1500, 8000), "E2": (100, 3000), "E3": (50, 600), "E4": (30, 400)}
+LIMITS = {"E1": (1500, 10000), "E2": (100, 1000), "E3": (50, 1000), "E4": (30, 2000)}   # compromise limits
+BEFORE_LIMITS = {"E1": (1500, 8000), "E2": (100, 3000), "E3": (50, 600), "E4": (30, 400)}  # old limits
+TRAIN_LABEL = "Training data: deflections corrected to 20 °C (own-data coefficients), compromise limits"
 
 
 def road_of(key):
@@ -72,7 +81,7 @@ def pct(x):
 
 
 # ------------------------------------------------------------------ dataset
-def build_dataset(src=DATASET, out="dataset.json", limits=LIMITS, label="Before (original bowls, old limits)"):
+def build_dataset(src=DATASET, out="dataset.json", limits=LIMITS, label=TRAIN_LABEL):
     """All backcalculated cases in compact column form (one file per limit option)."""
     d = pd.read_csv(src).sort_values(["row_index", "survey"])
     d["road"] = d["key"].map(road_of)
@@ -122,9 +131,9 @@ def unrealistic_full():
             "cases": int(len(g)),
             "unrealistic": int(m.sum()),
             "unrealistic_pct": pct(m),
-            "E1_above_8000": int((m & (g.E1_no_limits > 8000 * 1.02)).sum()),
-            "E2_below_100": int((m & (g.E2_no_limits < 100 * 0.98)).sum()),
-            "E4_above_400": int((m & (g.E4_no_limits > 400 * 1.02)).sum()),
+            **{f"{e}_{side}": int((m & ((g[f"{e}_no_limits"] < lo * 0.98) if side == "below" else
+                                         (g[f"{e}_no_limits"] > hi * 1.02))).sum())
+               for e, (lo, hi) in LIMITS.items() for side in ("below", "above")},
         }
 
     return {
@@ -137,23 +146,31 @@ def unrealistic_full():
     }
 
 
-# Clear unrealistic examples: both answers fit the measured bowl within 3 %
-UNREALISTIC_EXAMPLES = [(2437, 3), (715, 4), (3111, 1), (6791, 4), (1693, 2), (629, 3)]
-
-
-def unrealistic_examples():
-    d = pd.read_csv(BOUNDS_FULL).set_index(["row_index", "survey"])
+# Clear unrealistic examples: both answers fit the measured bowl within 3 %.
+# Picked automatically: for each way a layer can be clearly impossible, the case with the best fits (one per road).
+def unrealistic_examples(n_max=6):
+    d = pd.read_csv(BOUNDS_FULL)
+    d = d[d.unrealistic_without_limits.astype(bool) & (d.rms_no_limits_pct <= 3) & (d.rms_limits_pct <= 3)]
+    d = d.assign(worst=d[["rms_no_limits_pct", "rms_limits_pct"]].max(axis=1)).sort_values(["worst", "row_index", "survey"])
     E = list(LIMITS)
-    out = []
-    for key in UNREALISTIC_EXAMPLES:
-        if key not in d.index:
-            continue
-        r = d.loc[key]
-        out.append({
-            "row_index": key[0], "survey": key[1], "date": SURVEYS[key[1]], "road": road_of(r.key),
-            "no_limits": [int(r[f"{e}_no_limits"]) for e in E], "rms_no_limits": round(float(r.rms_no_limits_pct), 1),
-            "limits": [int(r[f"{e}_limits"]) for e in E], "rms_limits": round(float(r.rms_limits_pct), 1),
-        })
+    out, used = [], set()
+    for e, (lo, hi) in LIMITS.items():
+        for side in ("above", "below"):
+            col = d[f"{e}_no_limits"]
+            m = (col > hi * 1.5) if side == "above" else (col < lo / 1.5)     # clearly outside (factor 1.5)
+            for r in d[m].itertuples():
+                road = road_of(r.key)
+                if road in used:
+                    continue
+                used.add(road)
+                out.append({
+                    "row_index": int(r.row_index), "survey": int(r.survey), "date": SURVEYS[int(r.survey)], "road": road,
+                    "no_limits": [int(getattr(r, f"{x}_no_limits")) for x in E], "rms_no_limits": round(float(r.rms_no_limits_pct), 1),
+                    "limits": [int(getattr(r, f"{x}_limits")) for x in E], "rms_limits": round(float(r.rms_limits_pct), 1),
+                })
+                break
+            if len(out) >= n_max:
+                return out
     return out
 
 
@@ -224,9 +241,9 @@ def build_option_datasets():
 def build_limits_compare():
     """limits_compare<suffix>.json for each temperature correction."""
     baseline = None
-    if DATASET.exists() and BOUNDS_FULL.exists():
+    if BEFORE_DATASET.exists() and BEFORE_BOUNDS.exists():
         baseline = {"label": "Before (original bowls, old limits)",
-                    **_option_summary(pd.read_csv(DATASET), pd.read_csv(BOUNDS_FULL), LIMITS)}
+                    **_option_summary(pd.read_csv(BEFORE_DATASET), pd.read_csv(BEFORE_BOUNDS), BEFORE_LIMITS)}
     for cid, clabel, folder, suf in CORRECTIONS:
         if not folder.exists():
             print(f"skipped limits_compare{suf}.json: {folder.relative_to(ROOT)} not found")
@@ -243,6 +260,80 @@ def build_limits_compare():
                                            "note": f"Deflections temperature-corrected to 20 C with Park et al. (2002), "
                                                    f"{clabel}; all bowls backcalculated again; only the limits differ.",
                                            "options": options, "baseline": baseline})
+
+
+def _e1_trend(t):
+    """Change of E1 (%) per +1 C at the same location (usable bowls, location means removed)."""
+    g = t[t.rms_pct <= 5]
+    g = g[g.groupby("row_index").row_index.transform("size") >= 2]
+    l = np.log(g.E1) - np.log(g.E1).groupby(g.row_index).transform("mean")
+    T = g.asphalt_temp_C - g.groupby("row_index").asphalt_temp_C.transform("mean")
+    return round(100 * (np.exp((l * T).sum() / (T * T).sum()) - 1), 1)
+
+
+def build_temp_correction():
+    """temp_correction.json: how much each correction changes the deflections, own vs Park statewide (compromise run)."""
+    if not BEFORE_DATASET.exists():
+        print(f"skipped temp_correction.json: {BEFORE_DATASET.relative_to(ROOT)} not found")
+        return
+    orig = pd.read_csv(BEFORE_DATASET).sort_values(["row_index", "survey"]).reset_index(drop=True)
+    runs = {}
+    for cid, clabel, folder, suf in CORRECTIONS:
+        f = folder / "backcalc_tempcorr_comp_full.csv"
+        if f.exists():
+            runs[cid] = (clabel, pd.read_csv(f).sort_values(["row_index", "survey"]).reset_index(drop=True))
+    if not runs:
+        print("skipped temp_correction.json: no corrected runs found")
+        return
+    change = {cid: {d: 100 * (t[d].abs() / orig[d].abs() - 1) for d in DEFL} for cid, (_, t) in runs.items()}
+    T = orig.asphalt_temp_C
+    by_sensor = []
+    for d, r in zip(DEFL, [0, 130, 215, 300, 450, 600, 900, 1200, 1500]):
+        row = {"sensor": d, "r_mm": r}
+        for cid, ch in change.items():
+            c = ch[d]
+            row[cid] = {"median": round(float(c.median()), 2), "p10": round(float(c.quantile(0.1)), 2),
+                        "p90": round(float(c.quantile(0.9)), 2), "corrected_pct": pct(c.abs() > 0.01)}
+        by_sensor.append(row)
+    by_survey = []
+    for s in sorted(orig.survey.unique()):
+        m = orig.survey == s
+        by_survey.append({"survey": int(s), "date": SURVEYS[int(s)], "T_median": round(float(T[m].median()), 1),
+                          **{cid: round(float(ch["D0"][m].median()), 2) for cid, ch in change.items()}})
+    by_temp = []
+    for tb in range(int(np.floor(T.min())), int(np.ceil(T.max()))):
+        m = (T >= tb) & (T < tb + 1)
+        if m.sum() >= 30:
+            by_temp.append({"T": tb + 0.5, "n": int(m.sum()),
+                            **{cid: round(float(ch["D0"][m].median()), 2) for cid, ch in change.items()}})
+    e1 = [{"id": "none", "label": "No correction (original bowls, old limits)", "pct": _e1_trend(orig),
+           "median_E1": int(orig[orig.rms_pct <= 5].E1.median())}]
+    for cid, (clabel, t) in runs.items():
+        e1.append({"id": cid, "label": clabel, "pct": _e1_trend(t), "median_E1": int(t[t.rms_pct <= 5].E1.median())})
+    simple = []
+    for s_, m in [(int(s), orig.survey == s) for s in sorted(orig.survey.unique())] + [(0, orig.survey > 0)]:
+        row = {"survey": s_, "date": SURVEYS.get(s_, "All surveys"), "T_median": round(float(T[m].median()), 1),
+               "before": round(float(orig.D0[m].abs().median()), 1)}
+        for cid, (_, t) in runs.items():
+            row[cid] = round(float(t.D0[m].abs().median()), 1)
+            row[cid + "_pct"] = round(float(change[cid]["D0"][m].median()), 1)
+        simple.append(row)
+    example = None
+    EX_ROW = 6619                                          # a typical location (all 4 surveys fit well, no limit hit)
+    ex = orig[orig.row_index == EX_ROW].sort_values("asphalt_temp_C")
+    if len(ex) == 4:
+        rows_ex = []
+        for r in ex.itertuples():
+            row = {"survey": int(r.survey), "date": SURVEYS[int(r.survey)], "T": round(float(r.asphalt_temp_C), 1), "none": int(r.E1)}
+            for cid, (_, t) in runs.items():
+                row[cid] = int(t[(t.row_index == EX_ROW) & (t.survey == r.survey)].E1.iloc[0])
+            rows_ex.append(row)
+        example = {"row_index": EX_ROW, "road_key": ex.key.iloc[0], "thk1_mm": round(float(ex.thk1_mm.iloc[0])), "rows": rows_ex}
+    write("temp_correction.json", {
+        "simple": simple, "example": example,
+        "corrections": [{"id": cid, "label": lab} for cid, (lab, _) in runs.items()],
+        "by_sensor": by_sensor, "by_survey": by_survey, "by_temp": by_temp, "e1_trend": e1,
+        "note": "Change = corrected / measured - 1. Median over all bowls. E1 trends from the compromise-limit runs."})
 
 
 def read_erapave_output(path):
@@ -359,7 +450,10 @@ def build_holdout():
 
 if __name__ == "__main__":
     build_dataset()
+    if BEFORE_DATASET.exists():
+        build_dataset(BEFORE_DATASET, "dataset_before.json", BEFORE_LIMITS, "Before (original bowls, old limits)")
     build_bounds()
     build_holdout()
     build_limits_compare()
     build_option_datasets()
+    build_temp_correction()

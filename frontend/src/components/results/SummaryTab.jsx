@@ -48,20 +48,6 @@ function Step({ n, title, subtitle, last, children }) {
   );
 }
 
-/** Bar + % + count for the share of unrealistic bowls. */
-function Share({ pct, count }) {
-  const color = pct > 50 ? 'error.main' : 'warning.main';
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, justifyContent: 'flex-end' }}>
-      <Box sx={{ width: 90, height: 8, borderRadius: 4, bgcolor: 'action.hover', overflow: 'hidden' }}>
-        <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: color }} />
-      </Box>
-      <Box component="span" sx={{ minWidth: 52, fontWeight: 700, color: pct > 50 ? 'error.main' : 'text.primary' }}>{fmtPct(pct)}</Box>
-      <Box component="span" sx={{ minWidth: 48, color: 'text.secondary' }}>{fmt(count)}</Box>
-    </Box>
-  );
-}
-
 /** E1 / E2 / E3 / E4 with impossible values in red. */
 function Moduli({ values, limits }) {
   return (
@@ -80,8 +66,6 @@ function Moduli({ values, limits }) {
   );
 }
 
-const shareColumn = { key: 'unrealistic_pct', label: 'Unrealistic', format: (v, r) => <Share pct={v} count={r.unrealistic} /> };
-
 function SummaryTab() {
   const ds = useResults('dataset');
   const bd = useResults('bounds');
@@ -91,12 +75,25 @@ function SummaryTab() {
   const b = bd.data;
   const F = b.full;
   if (!F?.by_road) return <Loading error={new Error('bounds.json is out of date: run python make_results_data.py')} />;
-  const worst = F.by_road[0];
 
   return (
     <>
       <Step
         n={1}
+        title="Correct the deflections to 20 °C"
+        subtitle="Warm asphalt is soft and bends more. Every deflection near the load is converted to what it would be at 20 °C asphalt temperature, so all surveys can be compared."
+      >
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          <Chip variant="outlined" color="primary" label="Park et al. (2002) equation" />
+          <Chip variant="outlined" color="primary" label="C0 = 2.45E-05, A = −8.24E-08 (fitted on our data)" />
+        </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          After the correction E1 no longer depends on the temperature (see “Temperature correction”).
+        </Typography>
+      </Step>
+
+      <Step
+        n={2}
         title="Backcalculate all data without limits"
         subtitle="Unrealistic = the calculated bowl matches the measured bowl, but a layer gets an impossible stiffness."
       >
@@ -127,52 +124,29 @@ function SummaryTab() {
           </>
         )}
 
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2.5, mb: 1 }}>By survey</Typography>
-        <SimpleTable
-          rows={F.by_survey}
-          columns={[
-            { key: 'date', label: 'Survey', align: 'left' },
-            { key: 'cases', label: 'Bowls', format: (v) => fmt(v) },
-            shareColumn,
-          ]}
-        />
-
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2.5, mb: 1 }}>By road</Typography>
-        <SimpleTable
-          rows={F.by_road}
-          highlight={(r) => r.unrealistic_pct > 50}
-          columns={[
-            { key: 'road', label: 'Road', align: 'left', format: (v) => <b>{v}</b> },
-            { key: 'km', label: 'Length', format: (v) => `${fmt(v, 1)} km` },
-            { key: 'cases', label: 'Bowls', format: (v) => fmt(v) },
-            shareColumn,
-          ]}
-        />
-        <Typography variant="body2" color="text.secondary">
-          Road {worst.road} is unrealistic in {fmtPct(worst.unrealistic_pct)} of bowls, so its layer data may not match the real road.
-        </Typography>
       </Step>
 
       <Step
-        n={2}
+        n={3}
         title="Add realistic limits"
         subtitle="Only the unrealistic bowls change: they get the best-fitting realistic answer. All other bowls keep the same values."
       >
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
+          <Typography variant="body2" sx={{ fontWeight: 700, mr: 0.5 }}>Compromise limits:</Typography>
           {Object.entries(b.limits).map(([e, [lo, hi]]) => (
             <Chip key={e} variant="outlined" color="primary" label={`${e}: ${fmt(lo)} – ${fmt(hi)} MPa`} />
           ))}
         </Box>
       </Step>
 
-      <Step n={3} title="Backcalculate all data with limits">
+      <Step n={4} title="Backcalculate all data with limits">
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
           <Stat value={fmt(t.cases)} label={`bowls: ${fmt(t.cases / 4)} locations × 4 surveys`} color="primary" />
           <Stat value={fmt(t.good_fit)} label="usable bowls (fit within 5%)" color="success" />
         </Box>
       </Step>
 
-      <Step n={4} last title={`${fmt(t.good_fit)} bowls train the ML model`} />
+      <Step n={5} last title={`${fmt(t.good_fit)} bowls train the ML model`} />
     </>
   );
 }

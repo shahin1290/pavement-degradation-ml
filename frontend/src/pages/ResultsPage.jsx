@@ -5,6 +5,7 @@ import Section from '../components/Section';
 import SummaryTab from '../components/results/SummaryTab';
 import ExploreTab from '../components/results/ExploreTab';
 import LimitsCompareTab from '../components/results/LimitsCompareTab';
+import TempCorrectionTab from '../components/results/TempCorrectionTab';
 
 // The first entry opens by default.
 // To add a view: build its JSON in make_results_data.py,
@@ -13,6 +14,7 @@ const VIEWS = [
   { id: 'cases', icon: '📋', label: 'Backcalculated cases', component: ExploreTab },
   { id: 'process', icon: '🧭', label: 'How the data was built', component: SummaryTab },
   { id: 'limits', icon: '⚖️', label: 'Compare limits', component: LimitsCompareTab },
+  { id: 'tempcorr', icon: '🌡️', label: 'Temperature correction', component: TempCorrectionTab },
 ];
 
 /** Compact segmented switch: one pill per view, the active one filled. */

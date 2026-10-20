@@ -1,9 +1,19 @@
+"""
+Central settings for the modulus surrogate model.
+
+To test new input variables, you normally only change ACTIVE_FEATURE_GROUPS
+(and add a group to FEATURE_GROUPS if the variable is new).
+"""
 
 # ============================================================
 # DATA
 # ============================================================
 
-# Backcalculation results, one row per (Excel row, survey)
+# Backcalculation results, one row per (Excel row, survey).
+# Deflections temperature-corrected to 20 C (Park et al. 2002 equation, own-data coefficients
+# C0 = 2.45E-05, A = -8.24E-08), backcalculated with the compromise limits.
+# The model therefore predicts moduli at 20 C from deflections at 20 C.
+# The run before the correction (original bowls, old limits) is kept in data/before_tempcorr/.
 DATA_PATH = "data/backcalc_rows0-7050_full.csv"
 
 ARTIFACTS_DIR = "artifacts"
@@ -37,12 +47,12 @@ LOG_FEATURES = FEATURE_GROUPS["deflections"]
 
 TARGETS = ["E1", "E2", "E3", "E4"]   # MPa, trained in log space
 
-# Backcalculation limits (MPa). Predictions are clipped to these.
+# Backcalculation limits (MPa), the "compromise" set. Predictions are clipped to these.
 MODULUS_LIMITS = {
-    "E1": (1500, 8000),
-    "E2": (100, 3000),
-    "E3": (50, 600),
-    "E4": (30, 400),
+    "E1": (1500, 10000),
+    "E2": (100, 1000),
+    "E3": (50, 1000),
+    "E4": (30, 2000),
 }
 
 # ============================================================
@@ -74,6 +84,8 @@ RANDOM_STATE = 42
 HOLDOUT_PER_SURVEY = 5        # 5 x 4 surveys = 20 cases; set 0 to disable
 
 # ERAPAVE settings for the .dat files (same as the backcalculation)
+# ERAPAVE "Axle Load" for a single axle with single wheels: 100 kN axle
+# = 50 kN per wheel, which is the wheel load used in the backcalculation.
 ERAPAVE_LOAD_KN = 100.0
 ERAPAVE_STRESS_KPA = 800.0
 ERAPAVE_POISSON = [0.35, 0.35, 0.35, 0.40]
@@ -103,6 +115,7 @@ MODEL_PARAMS = {
 
 
 def get_feature_columns():
+    """Raw input columns for the active feature groups, in a fixed order."""
     cols = []
     for group in ACTIVE_FEATURE_GROUPS:
         if group not in FEATURE_GROUPS:

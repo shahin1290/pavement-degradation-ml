@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Box, Button, Chip, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Chip, MenuItem, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 
 import { toRows, toCsv, downloadCsv } from '../../services/results';
 import { useResults, Loading, SimpleTable, fmt, fmtPct, CORRECTIONS } from './common';
@@ -14,7 +14,12 @@ const OPTIONS = [
   { id: 'new', label: 'New' },
   { id: 'before', label: 'Before (old)' },
 ];
-const fileFor = (optId, corr) => (optId === 'before' ? 'dataset' : `dataset${corr.suffix}_${optId}`);
+const fileFor = (optId, corr) => (optId === 'before' ? 'dataset_before' : `dataset${corr.suffix}_${optId}`);
+/** Position along the road in km from the road key: '5V4D76180' -> 76.18 */
+const posKm = (key) => {
+  const m = /D(\d+)$/.exec(String(key || ''));
+  return m ? Number(m[1]) / 1000 : null;
+};
 const limitText = (l) => ['E1', 'E2', 'E3', 'E4'].map((e) => `${e} ${fmt(l[e][0])}–${fmt(l[e][1])}`).join(' · ');
 
 /** Case in the shape the predictor page expects */
@@ -49,10 +54,19 @@ function ExploreTab({ onOpenInPredictor }) {
   const rows = useMemo(() => (data ? toRows(data.columns) : []), [data]);
   const [survey, setSurvey] = useState('all');
   const [fit, setFit] = useState('all');
+  const [road, setRoad] = useState('all');
+
+  // Roads sorted by number, with their number of bowls
+  const roads = useMemo(() => {
+    const n = {};
+    rows.forEach((r) => { n[r.road] = (n[r.road] || 0) + 1; });
+    return Object.keys(n).sort((a, b) => parseFloat(a) - parseFloat(b)).map((k) => ({ road: k, n: n[k] }));
+  }, [rows]);
 
   const filtered = useMemo(() => rows.filter((r) =>
     (survey === 'all' || r.survey === survey)
-    && (fit === 'all' || (fit === 'good' ? !r.poor_fit : r.poor_fit))), [rows, survey, fit]);
+    && (road === 'all' || r.road === road)
+    && (fit === 'all' || (fit === 'good' ? !r.poor_fit : r.poor_fit))), [rows, survey, road, fit]);
 
   const picker = (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center', mb: 2 }}>
@@ -77,8 +91,18 @@ function ExploreTab({ onOpenInPredictor }) {
       format: (v, r) => <Tooltip title={`Road key ${r.key}`}><span>{v}</span></Tooltip>,
     },
     {
+      key: 'road', label: 'Road', align: 'left',
+      format: (v, r) => (
+        <Tooltip title={`Road key ${r.key}`}>
+          <span><b>{v}</b>{posKm(r.key) != null && (
+            <Box component="span" sx={{ color: 'text.secondary' }}> · km {fmt(posKm(r.key), 2)}</Box>
+          )}</span>
+        </Tooltip>
+      ),
+    },
+    {
       key: 'survey', label: 'Survey', align: 'center',
-      format: (v) => <Tooltip title={SURVEY_DATE[v] || ''}><span>{v}</span></Tooltip>,
+      format: (v) => <span>{v} <Box component="span" sx={{ color: 'text.secondary' }}>({SURVEY_DATE[v]})</Box></span>,
     },
     {
       key: 'thk', label: 'h1 / h2 / h3 (mm)', align: 'center',
@@ -88,7 +112,7 @@ function ExploreTab({ onOpenInPredictor }) {
         </Box>
       ),
     },
-    { key: 'asphalt_temp_C', label: 'Temp (°C)', format: (v) => fmt(v, 1) },
+    { key: 'asphalt_temp_C', label: 'Asphalt temp.', format: (v) => (v == null ? '–' : `${fmt(v, 1)} °C`) },
     ...['E1', 'E2', 'E3', 'E4'].map((e) => ({ key: e, label: e, format: (v) => <Modulus e={e} v={v} limits={data.limits} /> })),
     {
       key: 'rms_pct', label: 'Fit (RMS)', align: 'center',
@@ -142,6 +166,10 @@ function ExploreTab({ onOpenInPredictor }) {
           <ToggleButton value="all">All surveys</ToggleButton>
           {[1, 2, 3, 4].map((s) => <ToggleButton key={s} value={s}>Survey {s}</ToggleButton>)}
         </ToggleButtonGroup>
+        <TextField select size="small" label="Road" value={road} onChange={(e) => setRoad(e.target.value)} sx={{ minWidth: 150 }}>
+          <MenuItem value="all">All roads</MenuItem>
+          {roads.map((x) => <MenuItem key={x.road} value={x.road}>Road {x.road} ({fmt(x.n)})</MenuItem>)}
+        </TextField>
         <ToggleButtonGroup size="small" exclusive value={fit} onChange={(_, v) => v && setFit(v)}>
           <ToggleButton value="all">All</ToggleButton>
           <ToggleButton value="good">Good fits</ToggleButton>
