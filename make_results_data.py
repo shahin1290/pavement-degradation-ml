@@ -192,7 +192,6 @@ def build_bounds():
 # ------------------------------------------------------------------ limit options (temperature-corrected bowls)
 LIMIT_OPTIONS = [                         # id, label, limits (MPa)
     ("new", "New", {"E1": (1500, 10000), "E2": (200, 1000), "E3": (100, 1000), "E4": (30, 2000)}),
-    ("middle", "Middle", {"E1": (1500, 10000), "E2": (150, 1000), "E3": (75, 1000), "E4": (30, 2000)}),
     ("comp", "Compromise", {"E1": (1500, 10000), "E2": (100, 1000), "E3": (50, 1000), "E4": (30, 2000)}),
 ]
 # Temperature corrections: id, label, folder with the step2_limits.py files, json suffix ("" keeps the old file names)
@@ -336,6 +335,66 @@ def build_temp_correction():
         "note": "Change = corrected / measured - 1. Median over all bowls. E1 trends from the compromise-limit runs."})
 
 
+# ------------------------------------------------------------------ how C0 was calculated (step by step)
+C0_EXAMPLE_LOCATIONS = [1220, 2830, 6856]     # 3 locations x 4 surveys, only to show the arithmetic
+C0_SENSORS = [("D0", 0), ("D130", 130), ("D215", 215), ("D300", 300)]
+
+
+def _two_way(v, loc, surv):
+    """x* = x - location mean - survey mean + overall mean (all locations have all 4 surveys)."""
+    return v - v.groupby(loc).transform("mean") - v.groupby(surv).transform("mean") + v.mean()
+
+
+def build_c0_calc():
+    """c0_calc.json: the C0 / A calculation (Park et al. 2002, Eq. 2, 6, 7) on the original bowls."""
+    if not BEFORE_DATASET.exists():
+        print(f"skipped c0_calc.json: {BEFORE_DATASET.relative_to(ROOT)} not found")
+        return
+    d = pd.read_csv(BEFORE_DATASET).sort_values(["row_index", "survey"]).reset_index(drop=True)
+    d = d[d.groupby("row_index").survey.transform("nunique") == 4]
+
+    # ---- worked example
+    e = d[d.row_index.isin(C0_EXAMPLE_LOCATIONS)].copy()
+    e["y"] = np.log10(e.D0.abs()); e["x"] = e.thk1_mm * (e.asphalt_temp_C - 20)
+    lm = e.groupby("row_index")[["x", "y"]].mean(); sm = e.groupby("survey")[["x", "y"]].mean(); gm = e[["x", "y"]].mean()
+    e["xst"] = _two_way(e.x, e.row_index, e.survey); e["yst"] = _two_way(e.y, e.row_index, e.survey)
+    rows = [{"loc": int(r.row_index), "survey": int(r.survey), "date": SURVEYS[int(r.survey)],
+             "H": round(float(r.thk1_mm), 2), "T": round(float(r.asphalt_temp_C), 1), "D0": round(float(abs(r.D0)), 3),
+             "y": round(float(r.y), 5), "x": round(float(r.x), 1),
+             "lx": round(float(lm.x[r.row_index]), 1), "ly": round(float(lm.y[r.row_index]), 5),
+             "sx": round(float(sm.x[r.survey]), 1), "sy": round(float(sm.y[r.survey]), 5),
+             "xs": round(float(r.xst), 1), "ys": round(float(r.yst), 5),
+             "xy": round(float(r.xst * r.yst), 4), "xx": round(float(r.xst ** 2), 1)} for r in e.itertuples()]
+    sxy, sxx = float((e.xst * e.yst).sum()), float((e.xst ** 2).sum())
+    example = {"rows": rows,
+               "loc_means": [{"loc": int(k), "x": round(float(v.x), 1), "y": round(float(v.y), 5)} for k, v in lm.iterrows()],
+               "survey_means": [{"survey": int(k), "date": SURVEYS[int(k)], "x": round(float(v.x), 1), "y": round(float(v.y), 5)}
+                                for k, v in sm.iterrows()],
+               "all_mean": {"x": round(float(gm.x), 1), "y": round(float(gm.y), 5)},
+               "sum_xy": round(sxy, 4), "sum_xx": round(sxx, 1), "C": sxy / sxx}
+
+    # ---- full data, each sensor (90% range: standard error clustered by location)
+    xs = _two_way(d.thk1_mm * (d.asphalt_temp_C - 20), d.row_index, d.survey)
+    sensors = []
+    for name, r in C0_SENSORS:
+        ys = _two_way(np.log10(d[name].abs()), d.row_index, d.survey)
+        C = float((xs * ys).sum() / (xs ** 2).sum())
+        g = (xs * (ys - C * xs)).groupby(d.row_index).sum()
+        se = float(np.sqrt((g ** 2).sum()) / (xs ** 2).sum())
+        sensors.append({"sensor": name, "r": r, "C": C, "lo": C - 1.645 * se, "hi": C + 1.645 * se})
+    rr = np.array([s_["r"] for s_ in sensors], float); cc = np.array([s_["C"] for s_ in sensors])
+    dr, dc = rr - rr.mean(), cc - cc.mean()
+    A = float((dr * dc).sum() / (dr ** 2).sum()); C0 = float(cc.mean() - A * rr.mean())
+    line = {"r_mean": float(rr.mean()), "C_mean": float(cc.mean()),
+            "rows": [{"sensor": s_["sensor"], "r": s_["r"], "C": s_["C"], "dr": float(a), "dc": float(b)}
+                     for s_, a, b in zip(sensors, dr, dc)],
+            "sum_drdc": float((dr * dc).sum()), "sum_drdr": float((dr ** 2).sum()), "A": A, "C0": C0}
+    write("c0_calc.json", {"bowls": int(len(d)), "locations": int(d.row_index.nunique()),
+                           "example": example, "sensors": sensors, "line": line,
+                           "park": [{"name": "Statewide", "C0": 4.65e-5, "A": -5.47e-8}, {"name": "East", "C0": 3.61e-5, "A": -5.72e-8},
+                                    {"name": "Central", "C0": 5.80e-5, "A": -5.62e-8}, {"name": "West", "C0": 4.32e-5, "A": -5.07e-8}]})
+
+
 def read_erapave_output(path):
     """
     Read one ERAPave output file (the "SUMMARY OF INPUT DATA ..." text).
@@ -457,3 +516,4 @@ if __name__ == "__main__":
     build_limits_compare()
     build_option_datasets()
     build_temp_correction()
+    build_c0_calc()

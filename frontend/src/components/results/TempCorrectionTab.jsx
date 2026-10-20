@@ -1,7 +1,9 @@
-import { Box, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, Collapse, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
 import { useResults, Loading, SimpleTable, fmt } from './common';
+import C0Calculation from './C0Calculation';
 
 // What the temperature correction does to E1: no correction vs own data vs Park statewide (data: temp_correction.json).
 const CASES = [
@@ -43,6 +45,7 @@ function CaseCard({ c, trend }) {
 
 function TempCorrectionTab() {
   const { data, error } = useResults('temp_correction');
+  const [showC0, setShowC0] = useState(false);
   if (!data) return <Loading error={error} />;
   const trend = Object.fromEntries(data.e1_trend.map((r) => [r.id, r]));
   const cases = CASES.filter((c) => trend[c.id]);
@@ -87,6 +90,18 @@ function TempCorrectionTab() {
           </Typography>
         </>
       )}
+
+      <Box sx={{ mt: 4, pt: 2.5, borderTop: 1, borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Typography variant="h6">How C0 = 2.45E-05 was calculated</Typography>
+          <Button size="small" variant={showC0 ? 'outlined' : 'contained'} onClick={() => setShowC0((v) => !v)}>
+            {showC0 ? 'Hide steps' : 'Show step by step'}
+          </Button>
+        </Box>
+        <Collapse in={showC0} unmountOnExit>
+          <Box sx={{ mt: 1.5 }}><C0Calculation /></Box>
+        </Collapse>
+      </Box>
     </>
   );
 }

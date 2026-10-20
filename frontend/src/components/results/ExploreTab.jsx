@@ -10,7 +10,6 @@ const SURVEY_DATE = { 1: 'Aug 2022', 2: 'Sep 2023', 3: 'May 2024', 4: 'Sep 2024'
 // Which backcalculation to show: file name in public/results/ (built by make_results_data.py)
 const OPTIONS = [
   { id: 'comp', label: 'Compromise' },
-  { id: 'middle', label: 'Middle' },
   { id: 'new', label: 'New' },
   { id: 'before', label: 'Before (old)' },
 ];
