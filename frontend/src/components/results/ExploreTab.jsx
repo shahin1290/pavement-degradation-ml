@@ -2,18 +2,19 @@ import { useMemo, useState } from 'react';
 import { Box, Button, Chip, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 
 import { toRows, toCsv, downloadCsv } from '../../services/results';
-import { useResults, Loading, SimpleTable, fmt, fmtPct } from './common';
+import { useResults, Loading, SimpleTable, fmt, fmtPct, CORRECTIONS } from './common';
 
 const DEFL = ['D0', 'D130', 'D215', 'D300', 'D450', 'D600', 'D900', 'D1200', 'D1500'];
 const SURVEY_DATE = { 1: 'Aug 2022', 2: 'Sep 2023', 3: 'May 2024', 4: 'Sep 2024' };
 
 // Which backcalculation to show: file name in public/results/ (built by make_results_data.py)
 const OPTIONS = [
-  { id: 'comp', file: 'dataset_comp', label: 'Compromise' },
-  { id: 'middle', file: 'dataset_middle', label: 'Middle' },
-  { id: 'new', file: 'dataset_new', label: 'New' },
-  { id: 'before', file: 'dataset', label: 'Before (old)' },
+  { id: 'comp', label: 'Compromise' },
+  { id: 'middle', label: 'Middle' },
+  { id: 'new', label: 'New' },
+  { id: 'before', label: 'Before (old)' },
 ];
+const fileFor = (optId, corr) => (optId === 'before' ? 'dataset' : `dataset${corr.suffix}_${optId}`);
 const limitText = (l) => ['E1', 'E2', 'E3', 'E4'].map((e) => `${e} ${fmt(l[e][0])}–${fmt(l[e][1])}`).join(' · ');
 
 /** Case in the shape the predictor page expects */
@@ -41,8 +42,10 @@ function Modulus({ e, v, limits }) {
 
 function ExploreTab({ onOpenInPredictor }) {
   const [optId, setOptId] = useState(OPTIONS[0].id);
+  const [corrId, setCorrId] = useState(CORRECTIONS[0].id);
   const opt = OPTIONS.find((o) => o.id === optId);
-  const { data, error } = useResults(opt.file);
+  const corr = CORRECTIONS.find((c) => c.id === corrId);
+  const { data, error } = useResults(fileFor(optId, corr));
   const rows = useMemo(() => (data ? toRows(data.columns) : []), [data]);
   const [survey, setSurvey] = useState('all');
   const [fit, setFit] = useState('all');
@@ -56,6 +59,13 @@ function ExploreTab({ onOpenInPredictor }) {
       <Typography variant="body2" sx={{ fontWeight: 700 }}>Limits:</Typography>
       <ToggleButtonGroup size="small" exclusive value={optId} onChange={(_, v) => v && setOptId(v)} color="primary">
         {OPTIONS.map((o) => <ToggleButton key={o.id} value={o.id} sx={{ px: 2 }}>{o.label}</ToggleButton>)}
+      </ToggleButtonGroup>
+      <Typography variant="body2" sx={{ fontWeight: 700, ml: { sm: 2 } }}>Temperature correction:</Typography>
+      <ToggleButtonGroup size="small" exclusive value={optId === 'before' ? null : corrId}
+        onChange={(_, v) => v && setCorrId(v)} color="primary" disabled={optId === 'before'}>
+        {CORRECTIONS.map((c) => (
+          <ToggleButton key={c.id} value={c.id} title={c.tip} sx={{ px: 2 }}>{c.label}</ToggleButton>
+        ))}
       </ToggleButtonGroup>
     </Box>
   );
@@ -140,7 +150,7 @@ function ExploreTab({ onOpenInPredictor }) {
         <Typography variant="body2" color="text.secondary">{fmt(filtered.length)} cases</Typography>
         <Box sx={{ flexGrow: 1 }} />
         <Button size="small" variant="outlined"
-          onClick={() => downloadCsv(`backcalc_results_${opt.id}.csv`, toCsv(filtered, Object.keys(data.columns)))}>
+          onClick={() => downloadCsv(`backcalc_results_${opt.id}${optId === 'before' ? '' : corr.suffix}.csv`, toCsv(filtered, Object.keys(data.columns)))}>
           Download CSV
         </Button>
       </Box>

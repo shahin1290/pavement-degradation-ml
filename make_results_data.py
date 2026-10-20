@@ -173,11 +173,15 @@ def build_bounds():
 
 # ------------------------------------------------------------------ ERAPave output files
 # ------------------------------------------------------------------ limit options (temperature-corrected bowls)
-LIMITS_DIR = DATA / "limits_compare"      # files made by step2_limits.py
 LIMIT_OPTIONS = [                         # id, label, limits (MPa)
     ("new", "New", {"E1": (1500, 10000), "E2": (200, 1000), "E3": (100, 1000), "E4": (30, 2000)}),
     ("middle", "Middle", {"E1": (1500, 10000), "E2": (150, 1000), "E3": (75, 1000), "E4": (30, 2000)}),
     ("comp", "Compromise", {"E1": (1500, 10000), "E2": (100, 1000), "E3": (50, 1000), "E4": (30, 2000)}),
+]
+# Temperature corrections: id, label, folder with the step2_limits.py files, json suffix ("" keeps the old file names)
+CORRECTIONS = [
+    ("state", "Park statewide (C0 = 4.65E-05, A = -5.47E-08)", DATA / "limits_compare", ""),
+    ("own", "Own data (C0 = 2.45E-05, A = -8.24E-08)", DATA / "limits_compare_own", "_own"),
 ]
 
 
@@ -208,32 +212,37 @@ def _option_summary(t, w, limits):
 
 
 def build_option_datasets():
-    """dataset_<id>.json for each limit option (temperature-corrected bowls), for the cases table."""
-    for oid, label, limits in LIMIT_OPTIONS:
-        src = LIMITS_DIR / f"backcalc_tempcorr_{oid}_full.csv"
-        if src.exists():
-            build_dataset(src, f"dataset_{oid}.json", limits, f"{label} limits (deflections corrected to 20 °C)")
+    """dataset<suffix>_<id>.json for each correction and limit option, for the cases table."""
+    for cid, clabel, folder, suf in CORRECTIONS:
+        for oid, label, limits in LIMIT_OPTIONS:
+            src = folder / f"backcalc_tempcorr_{oid}_full.csv"
+            if src.exists():
+                build_dataset(src, f"dataset{suf}_{oid}.json", limits,
+                              f"{label} limits, deflections corrected to 20 °C ({clabel})")
 
 
 def build_limits_compare():
-    if not LIMITS_DIR.exists():
-        print(f"skipped limits_compare.json: {LIMITS_DIR.relative_to(ROOT)} not found")
-        return
-    options = []
-    for oid, label, limits in LIMIT_OPTIONS:
-        tp = LIMITS_DIR / f"backcalc_tempcorr_{oid}_full.csv"
-        wp = LIMITS_DIR / f"backcalc_full_with_vs_without_limits_{oid}.csv"
-        if not (tp.exists() and wp.exists()):
-            print(f"  limits_compare: {oid} files missing, skipped")
-            continue
-        options.append({"id": oid, "label": label, **_option_summary(pd.read_csv(tp), pd.read_csv(wp), limits)})
+    """limits_compare<suffix>.json for each temperature correction."""
     baseline = None
     if DATASET.exists() and BOUNDS_FULL.exists():
         baseline = {"label": "Before (original bowls, old limits)",
                     **_option_summary(pd.read_csv(DATASET), pd.read_csv(BOUNDS_FULL), LIMITS)}
-    write("limits_compare.json", {"note": "Deflections temperature-corrected to 20 C (Park et al. 2002), "
-                                          "all bowls backcalculated again; only the limits differ.",
-                                  "options": options, "baseline": baseline})
+    for cid, clabel, folder, suf in CORRECTIONS:
+        if not folder.exists():
+            print(f"skipped limits_compare{suf}.json: {folder.relative_to(ROOT)} not found")
+            continue
+        options = []
+        for oid, label, limits in LIMIT_OPTIONS:
+            tp = folder / f"backcalc_tempcorr_{oid}_full.csv"
+            wp = folder / f"backcalc_full_with_vs_without_limits_{oid}.csv"
+            if not (tp.exists() and wp.exists()):
+                print(f"  limits_compare{suf}: {oid} files missing, skipped")
+                continue
+            options.append({"id": oid, "label": label, **_option_summary(pd.read_csv(tp), pd.read_csv(wp), limits)})
+        write(f"limits_compare{suf}.json", {"correction": cid, "correction_label": clabel,
+                                           "note": f"Deflections temperature-corrected to 20 C with Park et al. (2002), "
+                                                   f"{clabel}; all bowls backcalculated again; only the limits differ.",
+                                           "options": options, "baseline": baseline})
 
 
 def read_erapave_output(path):

@@ -81,3 +81,9 @@ export const LIMITS = { E1: [1500, 8000], E2: [100, 3000], E3: [50, 600], E4: [3
 
 export const fmt =(v, d = 0) => (v == null ? '–' : Number(v).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d }));
 export const fmtPct = (v) => (v == null ? '–' : `${Number(v).toFixed(1)}%`);
+
+// Temperature correction of the deflections (Park et al. 2002): suffix of the json files made by make_results_data.py
+export const CORRECTIONS = [
+  { id: 'own', suffix: '_own', label: 'Own data', tip: 'C0 = 2.45E-05, A = −8.24E-08 (fitted on the Östergötland data)' },
+  { id: 'state', suffix: '', label: 'Park statewide', tip: 'C0 = 4.65E-05, A = −5.47E-08 (Park et al. 2002, Table 3)' },
+];

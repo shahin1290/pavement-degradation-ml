@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Box, ButtonBase, Typography } from '@mui/material';
+import { Box, ButtonBase, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
-import { useResults, Loading, SimpleTable, fmt, fmtPct } from './common';
+import { useResults, Loading, SimpleTable, fmt, fmtPct, CORRECTIONS } from './common';
 
 // Compares limit options on the temperature-corrected bowls (data: limits_compare.json).
 const LAYERS = [['E1', 'Asphalt'], ['E2', 'Base'], ['E3', 'Subbase'], ['E4', 'Subgrade']];
@@ -89,17 +89,32 @@ function LimitHits({ o }) {
 }
 
 function LimitsCompareTab() {
-  const { data, error } = useResults('limits_compare');
+  const [corrId, setCorrId] = useState(CORRECTIONS[0].id);
+  const corr = CORRECTIONS.find((c) => c.id === corrId);
+  const { data, error } = useResults(`limits_compare${corr.suffix}`);
   const [selId, setSelId] = useState(null);
-  if (!data) return <Loading error={error} />;
+  const picker = (
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center', mb: 2 }}>
+      <Typography variant="body2" sx={{ fontWeight: 700 }}>Temperature correction:</Typography>
+      <ToggleButtonGroup size="small" exclusive value={corrId} onChange={(_, v) => v && setCorrId(v)} color="primary">
+        {CORRECTIONS.map((c) => (
+          <ToggleButton key={c.id} value={c.id} title={c.tip} sx={{ px: 2 }}>{c.label}</ToggleButton>
+        ))}
+      </ToggleButtonGroup>
+      <Typography variant="body2" color="text.secondary">{corr.tip}</Typography>
+    </Box>
+  );
+  if (!data) return <>{picker}<Loading error={error} /></>;
   const opts = data.options;
-  if (!opts?.length) return <Loading error={new Error('No limit options found: put the step2 files in data/limits_compare/ and run make_results_data.py')} />;
+  const folder = corr.id === 'own' ? 'data/limits_compare_own/' : 'data/limits_compare/';
+  if (!opts?.length) return <>{picker}<Loading error={new Error(`No limit options found: put the step2 files in ${folder} and run make_results_data.py`)} /></>;
   const base = data.baseline;
   const sel = opts.find((o) => o.id === selId) || opts[opts.length - 1];
   const baseRoad = Object.fromEntries((base?.by_road || []).map((r) => [r.road, r]));
 
   return (
     <>
+      {picker}
       <Typography color="text.secondary" sx={{ mb: 2.5 }}>
         All {fmt(opts[0].total.bowls)} bowls were temperature-corrected to 20 °C and backcalculated again.
         The options differ only in the limits (MPa). Bold limits differ from the compromise. Click an option for details.
