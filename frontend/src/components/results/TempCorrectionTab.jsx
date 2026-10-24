@@ -4,6 +4,7 @@ import { alpha } from '@mui/material/styles';
 
 import { useResults, Loading, SimpleTable, fmt } from './common';
 import C0Calculation from './C0Calculation';
+import E1TempChart from './E1TempChart';
 
 // What the temperature correction does to E1: no correction vs own data vs Park statewide (data: temp_correction.json).
 const CASES = [
@@ -64,6 +65,14 @@ function TempCorrectionTab() {
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: `repeat(${cases.length}, 1fr)` }, gap: 2 }}>
         {cases.map((c) => <CaseCard key={c.id} c={c} trend={trend[c.id]} />)}
       </Box>
+
+      {data.e1_vs_dt && (
+        <>
+          <SubTitle>Warmer than usual → how much does E1 change? (all locations)</SubTitle>
+          <E1TempChart data={data.e1_vs_dt} e20={data.e1_vs_temp?.erlingsson?.find((p) => p.T === 20)?.E}
+            ownMedian={trend.own?.median_E1} />
+        </>
+      )}
 
       {ex && (
         <>

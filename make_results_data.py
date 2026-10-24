@@ -328,8 +328,49 @@ def build_temp_correction():
                 row[cid] = int(t[(t.row_index == EX_ROW) & (t.survey == r.survey)].E1.iloc[0])
             rows_ex.append(row)
         example = {"row_index": EX_ROW, "road_key": ex.key.iloc[0], "thk1_mm": round(float(ex.thk1_mm.iloc[0])), "rows": rows_ex}
+    # E1 against temperature, location effect removed (same idea as the % per C trend), median and 25-75 % per 1 C
+    def e1_bins(t):
+        g = t[t.rms_pct <= 5].copy()
+        g = g[g.groupby("row_index").row_index.transform("size") >= 2]
+        l = np.log(g.E1)
+        g["E1n"] = np.exp(l - l.groupby(g.row_index).transform("mean") + l.mean())
+        g["Tb"] = np.floor(g.asphalt_temp_C) + 0.5
+        q = g.groupby("Tb").E1n.agg(["size", "median", lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)])
+        q.columns = ["n", "med", "q25", "q75"]
+        q = q[q.n >= 100]
+        return [{"T": float(k), "n": int(r.n), "med": int(r.med), "band": [int(r.q25), int(r.q75)]} for k, r in q.iterrows()]
+
+    # Same comparison as the % per C numbers, but drawn: remove each location's level AND each survey's level,
+    # then "temperature above normal" (x) against "E1 above normal" (y, %). Median per 1 C step.
+    def e1_dt(t):
+        g = t[t.rms_pct <= 5].copy()
+        g = g[g.groupby("row_index").row_index.transform("size") >= 2]
+        l, x = np.log(g.E1), g.asphalt_temp_C.astype(float)
+        for _ in range(30):                                 # two-way: location and survey effects removed
+            l = l - l.groupby(g.row_index).transform("mean"); l = l - l.groupby(g.survey).transform("mean")
+            x = x - x.groupby(g.row_index).transform("mean"); x = x - x.groupby(g.survey).transform("mean")
+        slope = 100 * (np.exp((l * x).sum() / (x * x).sum()) - 1)
+        d = pd.DataFrame({"b": x.round(), "y": 100 * (np.exp(l) - 1)})
+        q = d.groupby("b").y.agg(["size", "median"])
+        q = q[q["size"] >= 200]
+        return {"pct_per_C": round(float(slope), 1),
+                "points": [{"dT": float(k) + 0.0, "n": int(r["size"]), "med": round(float(r["median"]), 1)} for k, r in q.iterrows()]}
+
+    e1_vs_dt = {"none": e1_dt(orig)}
+    if "own" in runs:
+        e1_vs_dt["own"] = e1_dt(runs["own"][1])
+    lo = min(p["dT"] for v in e1_vs_dt.values() for p in v["points"])
+    hi = max(p["dT"] for v in e1_vs_dt.values() for p in v["points"])
+    e1_vs_dt["erlingsson"] = [{"dT": float(x), "pct": round(float(100 * (np.exp(-0.065 * x) - 1)), 1)}
+                              for x in np.arange(lo, hi + 0.01, 0.5)]
+
+    e1_vs_temp = {"none": e1_bins(orig)}
+    if "own" in runs:
+        e1_vs_temp["own"] = e1_bins(runs["own"][1])
+    e1_vs_temp["erlingsson"] = [{"T": float(x), "E": int(round(6500 * np.exp(-0.065 * (x - 10))))}
+                                for x in np.arange(17, 32.01, 0.5)]
     write("temp_correction.json", {
-        "simple": simple, "example": example,
+        "simple": simple, "example": example, "e1_vs_temp": e1_vs_temp, "e1_vs_dt": e1_vs_dt,
         "corrections": [{"id": cid, "label": lab} for cid, (lab, _) in runs.items()],
         "by_sensor": by_sensor, "by_survey": by_survey, "by_temp": by_temp, "e1_trend": e1,
         "note": "Change = corrected / measured - 1. Median over all bowls. E1 trends from the compromise-limit runs."})
