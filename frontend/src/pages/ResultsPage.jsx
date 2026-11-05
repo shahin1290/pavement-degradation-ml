@@ -4,7 +4,6 @@ import { Box, ButtonBase, Typography } from '@mui/material';
 import Section from '../components/Section';
 import SummaryTab from '../components/results/SummaryTab';
 import ExploreTab from '../components/results/ExploreTab';
-import LimitsCompareTab from '../components/results/LimitsCompareTab';
 import TempCorrectionTab from '../components/results/TempCorrectionTab';
 import RoadProfileTab from '../components/results/RoadProfileTab';
 
@@ -14,7 +13,6 @@ import RoadProfileTab from '../components/results/RoadProfileTab';
 const VIEWS = [
   { id: 'cases', icon: '📋', label: 'Backcalculated cases', component: ExploreTab },
   { id: 'process', icon: '🧭', label: 'How the data was built', component: SummaryTab },
-  { id: 'limits', icon: '⚖️', label: 'Compare limits', component: LimitsCompareTab },
   { id: 'tempcorr', icon: '🌡️', label: 'Temperature correction', component: TempCorrectionTab },
   { id: 'roads', icon: '🛣️', label: 'Road profiles', component: RoadProfileTab },
 ];

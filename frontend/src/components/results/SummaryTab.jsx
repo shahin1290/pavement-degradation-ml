@@ -66,15 +66,57 @@ function Moduli({ values, limits }) {
   );
 }
 
+const LAYERS = [['E1', 'Asphalt'], ['E2', 'Base'], ['E3', 'Subbase'], ['E4', 'Subgrade']];
+
+/** One card per limit option (New / Compromise); the chosen one is highlighted. */
+function OptionCard({ o, chosen, base }) {
+  const good = o.total.usable_pct >= 90;
+  return (
+    <Box sx={{
+      flex: '1 1 300px', p: 2, borderRadius: 3, border: 2,
+      borderColor: chosen ? 'success.main' : 'divider',
+      bgcolor: chosen ? (t) => alpha(t.palette.success.main, 0.05) : 'background.paper',
+    }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="h6" sx={{ lineHeight: 1.2 }}>{o.label}</Typography>
+        {chosen && <Chip size="small" color="success" label="✓ chosen" />}
+      </Box>
+      <Box sx={{ mt: 1, mb: 1.5, display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 1.5, rowGap: 0.25 }}>
+        {LAYERS.map(([e, name]) => {
+          const [lo, hi] = o.limits[e];
+          const diff = base && (lo !== base.limits[e][0] || hi !== base.limits[e][1]);
+          return (
+            <Box key={e} sx={{ display: 'contents' }}>
+              <Typography variant="body2" color="text.secondary">{name} {e}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: diff ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+                {fmt(lo)} – {fmt(hi)} MPa
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+      <Typography variant="h4" sx={{ color: good ? 'success.main' : 'error.main', lineHeight: 1 }}>{fmtPct(o.total.usable_pct)}</Typography>
+      <Typography variant="body2" color="text.secondary">usable bowls (fit ≤ 5%)</Typography>
+      <Box sx={{ display: 'flex', gap: 2, mt: 1.25, flexWrap: 'wrap' }}>
+        <Typography variant="body2"><b>{fmtPct(o.total.at_limit_pct)}</b> <span style={{ opacity: 0.7 }}>at a limit</span></Typography>
+      </Box>
+    </Box>
+  );
+}
+
 function SummaryTab() {
   const ds = useResults('dataset');
   const bd = useResults('bounds');
-  if (!ds.data || !bd.data) return <Loading error={ds.error || bd.error} />;
+  const lc = useResults('limits_compare_own');
+  if (!ds.data || !bd.data || !lc.data) return <Loading error={ds.error || bd.error || lc.error} />;
 
   const t = ds.data.total;
   const b = bd.data;
-  const F = b.full;
-  if (!F?.by_road) return <Loading error={new Error('bounds.json is out of date: run python make_results_data.py')} />;
+  const opts = lc.data.options || [];
+  const comp = opts.find((o) => o.id === 'comp');
+  const neu = opts.find((o) => o.id === 'new');
+  const order = [neu, comp].filter(Boolean);
 
   return (
     <>
@@ -95,15 +137,11 @@ function SummaryTab() {
       <Step
         n={2}
         title="Backcalculate all data without limits"
-        subtitle="Unrealistic = the calculated bowl matches the measured bowl, but a layer gets an impossible stiffness."
+        subtitle="Many bowls can be matched well by a layer combination that is not possible in a real road (the layers trade off against each other). Limits are needed to pick the realistic answer."
       >
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 1 }}>
-          <Stat value={fmtPct(F.unrealistic_pct)} label={`of all bowls are unrealistic (${fmt(F.unrealistic)} of ${fmt(F.cases)})`} color="warning" />
-        </Box>
-
         {b.examples?.length > 0 && (
           <>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2.5, mb: 1 }}>Examples</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Examples</Typography>
             <SimpleTable
               rows={b.examples}
               columns={[
@@ -113,40 +151,69 @@ function SummaryTab() {
                   format: (v, r) => <span><Moduli values={v} limits={b.limits} /> <small>(fit {fmt(r.rms_no_limits, 1)}%)</small></span>,
                 },
                 {
-                  key: 'limits', label: 'With limits (MPa)',
+                  key: 'limits', label: 'With compromise limits (MPa)',
                   format: (v, r) => <span><Moduli values={v} limits={b.limits} /> <small>(fit {fmt(r.rms_limits, 1)}%)</small></span>,
                 },
               ]}
             />
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Typography variant="body2" color="text.secondary">
               Both answers match the measured bowl within 3%, but the red values are not possible in a real road.
             </Typography>
           </>
         )}
-
       </Step>
 
       <Step
         n={3}
-        title="Add realistic limits"
-        subtitle="Only the unrealistic bowls change: they get the best-fitting realistic answer. All other bowls keep the same values."
+        title="Two sets of realistic limits"
+        subtitle="Only the bowls with an impossible answer change: they get the best-fitting answer within the limits. Bold = where the two options differ."
       >
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
-          <Typography variant="body2" sx={{ fontWeight: 700, mr: 0.5 }}>Compromise limits:</Typography>
-          {Object.entries(b.limits).map(([e, [lo, hi]]) => (
-            <Chip key={e} variant="outlined" color="primary" label={`${e}: ${fmt(lo)} – ${fmt(hi)} MPa`} />
-          ))}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+          {order.map((o) => <OptionCard key={o.id} o={o} chosen={o.id === 'comp'} base={o.id === 'new' ? comp : neu} />)}
+        </Box>
+        {lc.data.baseline && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+            For reference, before the temperature correction (original bowls, old limits 1,500–8,000 / 100–3,000 / 50–600 / 30–400):{' '}
+            {fmtPct(lc.data.baseline.total.usable_pct)} usable.
+          </Typography>
+        )}
+      </Step>
+
+      <Step
+        n={4}
+        title="Backcalculate all data with limits, and choose"
+        subtitle="Both options were run on all bowls. The stricter New limits leave many bowls without a good fit, mostly because the base (E2 ≥ 200) and subbase (E3 ≥ 100) minimums are too high for many roads."
+      >
+        <SimpleTable
+          rows={[...(comp?.by_survey || []).map((s, i) => ({ name: s.date, i })), { name: 'All surveys', i: -1 }]}
+          highlight={(r) => r.i === -1}
+          columns={[
+            { key: 'name', label: 'Usable bowls (fit ≤ 5%)', align: 'left', format: (v, r) => (r.i === -1 ? <b>{v}</b> : v) },
+            ...order.map((o) => ({
+              key: o.id, label: o.id === 'comp' ? `${o.label} ✓` : o.label, align: 'center',
+              format: (_, r) => {
+                const v = r.i === -1 ? o.total.usable_pct : o.by_survey[r.i].usable_pct;
+                return <Box component="span" sx={{ fontWeight: 700, color: v >= 90 ? 'success.dark' : v >= 80 ? 'warning.dark' : 'error.dark' }}>{fmtPct(v)}</Box>;
+              },
+            })),
+          ]}
+        />
+        <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, bgcolor: (th) => alpha(th.palette.success.main, 0.07) }}>
+          <Typography variant="body2">
+            <b>Chosen: Compromise.</b> It keeps {fmtPct(comp?.total.usable_pct)} of the bowls usable
+            (New: {fmtPct(neu?.total.usable_pct)}), hits a limit far less often ({fmtPct(comp?.total.at_limit_pct)} vs {fmtPct(neu?.total.at_limit_pct)}),
+            and its limits still cover realistic values for Swedish roads.
+          </Typography>
         </Box>
       </Step>
 
-      <Step n={4} title="Backcalculate all data with limits">
+      <Step n={5} last title={`${fmt(t.good_fit)} bowls train the ML model`}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
           <Stat value={fmt(t.cases)} label={`bowls: ${fmt(t.cases / 4)} locations × 4 surveys`} color="primary" />
-          <Stat value={fmt(t.good_fit)} label="usable bowls (fit within 5%)" color="success" />
+          <Stat value={fmt(t.good_fit)} label="usable with the compromise limits (fit within 5%)" color="success" />
+          <Stat value={fmt(t.median_rms, 2) + '%'} label="median fit of all bowls" color="primary" />
         </Box>
       </Step>
-
-      <Step n={5} last title={`${fmt(t.good_fit)} bowls train the ML model`} />
     </>
   );
 }

@@ -10,14 +10,14 @@ import ObjectivePage from './pages/ObjectivePage';
 import WorkPackagesPage from './pages/WorkPackagesPage';
 import ResultsPage from './pages/ResultsPage';
 
-// Tabs follow the project story: goal -> data -> backcalculation -> ML model -> next steps.
+// Tabs follow the project story: goal -> roadmap -> data -> backcalculation -> ML model.
 // The first page opens by default. To add a page: create it in src/pages/ and add one line here.
 const PAGES = [
   { id: 'objective', label: '🎯 Project Overview', component: ObjectivePage },
+  { id: 'wp', label: '🗺️ Roadmap (WP0–WP4)', component: WorkPackagesPage },
   { id: 'variables', label: '📋 Input Data', component: VariablesPage },
   { id: 'results', label: '🧮 Backcalculation', component: ResultsPage },
   { id: 'predictor', label: '🤖 ML Model', component: PredictorPage },
-  { id: 'wp', label: '🗺️ Roadmap (WP0–WP4)', component: WorkPackagesPage },
 ];
 
 function App() {

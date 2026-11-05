@@ -102,7 +102,7 @@ function TempCorrectionTab() {
 
       <Box sx={{ mt: 4, pt: 2.5, borderTop: 1, borderColor: 'divider' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h6">How C0 = 2.45E-05 was calculated</Typography>
+          <Typography variant="h6">How C0 = 2.45E-05 and A = −8.24E-08 were calculated</Typography>
           <Button size="small" variant={showC0 ? 'outlined' : 'contained'} onClick={() => setShowC0((v) => !v)}>
             {showC0 ? 'Hide steps' : 'Show step by step'}
           </Button>

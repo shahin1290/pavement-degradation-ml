@@ -2,18 +2,13 @@ import { useMemo, useState } from 'react';
 import { Box, Button, Chip, MenuItem, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 
 import { toRows, toCsv, downloadCsv } from '../../services/results';
-import { useResults, Loading, SimpleTable, fmt, fmtPct, CORRECTIONS } from './common';
+import { useResults, Loading, SimpleTable, fmt, fmtPct } from './common';
 
 const DEFL = ['D0', 'D130', 'D215', 'D300', 'D450', 'D600', 'D900', 'D1200', 'D1500'];
 const SURVEY_DATE = { 1: 'Aug 2022', 2: 'Sep 2023', 3: 'May 2024', 4: 'Sep 2024' };
 
-// Which backcalculation to show: file name in public/results/ (built by make_results_data.py)
-const OPTIONS = [
-  { id: 'comp', label: 'Compromise' },
-  { id: 'new', label: 'New' },
-  { id: 'before', label: 'Before (old)' },
-];
-const fileFor = (optId, corr) => (optId === 'before' ? 'dataset_before' : `dataset${corr.suffix}_${optId}`);
+// The standard backcalculation: deflections corrected to 20 °C (own-data coefficients), compromise limits.
+// This is the ML training data (dataset.json, built by make_results_data.py).
 /** Position along the road in km from the road key: '5V4D76180' -> 76.18 */
 const posKm = (key) => {
   const m = /D(\d+)$/.exec(String(key || ''));
@@ -45,11 +40,7 @@ function Modulus({ e, v, limits }) {
 }
 
 function ExploreTab({ onOpenInPredictor }) {
-  const [optId, setOptId] = useState(OPTIONS[0].id);
-  const [corrId, setCorrId] = useState(CORRECTIONS[0].id);
-  const opt = OPTIONS.find((o) => o.id === optId);
-  const corr = CORRECTIONS.find((c) => c.id === corrId);
-  const { data, error } = useResults(fileFor(optId, corr));
+  const { data, error } = useResults('dataset');
   const rows = useMemo(() => (data ? toRows(data.columns) : []), [data]);
   const [survey, setSurvey] = useState('all');
   const [fit, setFit] = useState('all');
@@ -67,22 +58,7 @@ function ExploreTab({ onOpenInPredictor }) {
     && (road === 'all' || r.road === road)
     && (fit === 'all' || (fit === 'good' ? !r.poor_fit : r.poor_fit))), [rows, survey, road, fit]);
 
-  const picker = (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center', mb: 2 }}>
-      <Typography variant="body2" sx={{ fontWeight: 700 }}>Limits:</Typography>
-      <ToggleButtonGroup size="small" exclusive value={optId} onChange={(_, v) => v && setOptId(v)} color="primary">
-        {OPTIONS.map((o) => <ToggleButton key={o.id} value={o.id} sx={{ px: 2 }}>{o.label}</ToggleButton>)}
-      </ToggleButtonGroup>
-      <Typography variant="body2" sx={{ fontWeight: 700, ml: { sm: 2 } }}>Temperature correction:</Typography>
-      <ToggleButtonGroup size="small" exclusive value={optId === 'before' ? null : corrId}
-        onChange={(_, v) => v && setCorrId(v)} color="primary" disabled={optId === 'before'}>
-        {CORRECTIONS.map((c) => (
-          <ToggleButton key={c.id} value={c.id} title={c.tip} sx={{ px: 2 }}>{c.label}</ToggleButton>
-        ))}
-      </ToggleButtonGroup>
-    </Box>
-  );
-  if (!data) return <>{picker}<Loading error={error} /></>;
+  if (!data) return <Loading error={error} />;
 
   const columns = [
     {
@@ -140,9 +116,8 @@ function ExploreTab({ onOpenInPredictor }) {
 
   return (
     <>
-      {picker}
       <Box sx={{ p: 1.5, mb: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
-        <Typography variant="body2"><b>{data.label || opt.label}</b></Typography>
+        <Typography variant="body2"><b>Deflections corrected to 20 °C, compromise limits</b></Typography>
         <Typography variant="body2" color="text.secondary">Limits (MPa): {limitText(data.limits)}</Typography>
         <Typography variant="body2" sx={{ mt: 0.5 }}>
           <b>{fmt(data.total.good_fit)}</b> of {fmt(data.total.cases)} cases fit within 5%{' '}
@@ -161,10 +136,14 @@ function ExploreTab({ onOpenInPredictor }) {
       </Box>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 2 }}>
-        <ToggleButtonGroup size="small" exclusive value={survey} onChange={(_, v) => v && setSurvey(v)}>
-          <ToggleButton value="all">All surveys</ToggleButton>
-          {[1, 2, 3, 4].map((s) => <ToggleButton key={s} value={s}>Survey {s}</ToggleButton>)}
-        </ToggleButtonGroup>
+        <TextField select size="small" label="Survey" value={survey} onChange={(e) => setSurvey(e.target.value)} sx={{ minWidth: 190 }}>
+          <MenuItem value="all">All surveys ({fmt(rows.filter((r) => road === 'all' || r.road === road).length)})</MenuItem>
+          {[1, 2, 3, 4].map((s) => (
+            <MenuItem key={s} value={s}>
+              Survey {s} — {SURVEY_DATE[s]} ({fmt(rows.filter((r) => r.survey === s && (road === 'all' || r.road === road)).length)})
+            </MenuItem>
+          ))}
+        </TextField>
         <TextField select size="small" label="Road" value={road} onChange={(e) => setRoad(e.target.value)} sx={{ minWidth: 150 }}>
           <MenuItem value="all">All roads</MenuItem>
           {roads.map((x) => <MenuItem key={x.road} value={x.road}>Road {x.road} ({fmt(x.n)})</MenuItem>)}
@@ -177,7 +156,7 @@ function ExploreTab({ onOpenInPredictor }) {
         <Typography variant="body2" color="text.secondary">{fmt(filtered.length)} cases</Typography>
         <Box sx={{ flexGrow: 1 }} />
         <Button size="small" variant="outlined"
-          onClick={() => downloadCsv(`backcalc_results_${opt.id}${optId === 'before' ? '' : corr.suffix}.csv`, toCsv(filtered, Object.keys(data.columns)))}>
+          onClick={() => downloadCsv('backcalc_results_compromise.csv', toCsv(filtered, Object.keys(data.columns)))}>
           Download CSV
         </Button>
       </Box>

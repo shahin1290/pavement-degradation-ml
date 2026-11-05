@@ -11,6 +11,8 @@ Reads (from data/):
 
   artifacts/holdout.csv                          the 20 holdout cases (made by train.py)
   data/erapave_holdout/*.txt                     ERAPave output with the ML moduli for holdout cases (optional)
+  artifacts/holdout/holdout_predictions.csv      ML moduli of the holdout cases (made by predict_holdout.py),
+                                                 used to skip ERAPave files from an older model
 
 Writes (to frontend/public/results/):
   dataset.json   every case, compact column format
@@ -474,6 +476,13 @@ def erapave_checks(cases):
     """
     if not ERAPAVE_DIR.exists():
         return {}
+    # ML moduli of the current model (made by predict_holdout.py): an ERAPave file must use them,
+    # so files from an older model are skipped instead of giving a wrong check
+    ml_E = {}
+    pred = ROOT / "artifacts" / "holdout" / "holdout_predictions.csv"
+    if pred.exists():
+        for r in pd.read_csv(pred).itertuples():
+            ml_E[f"holdout-{int(r.row_index)}-{int(r.survey)}"] = [r.E1_ML, r.E2_ML, r.E3_ML, r.E4_ML]
     found = {}
     for f in sorted(ERAPAVE_DIR.glob("*")):
         if not f.is_file():
@@ -487,20 +496,28 @@ def erapave_checks(cases):
             print(f"  skipped {f.name}: not an ERAPave output with 9 deflections")
             continue
         name = f.stem.lower()
+
+        def same_thk(c):
+            h = [c["inputs"][f"thk{k}_mm"] / 10 for k in (1, 2, 3)]
+            return all(abs(a - b) < 0.05 for a, b in zip(h, out["thk_cm"]))
+
         match = None
-        for c in cases:
+        for c in cases:      # 1) "row1028_survey1..." or 2) "1028.txt", and the thicknesses must agree
             r, s = c["id"].split("-")[1:]
-            if f"row{r}_survey{s}" in name:
+            if (f"row{r}_survey{s}" in name or name == r) and same_thk(c):
                 match = c
                 break
-        if match is None:   # fall back to thicknesses
-            for c in cases:
-                h = [c["inputs"][f"thk{k}_mm"] / 10 for k in (1, 2, 3)]
-                if all(abs(a - b) < 0.05 for a, b in zip(h, out["thk_cm"])):
-                    match = c
-                    break
+        if match is None:    # 3) thicknesses only, if exactly one case fits
+            fits = [c for c in cases if same_thk(c)]
+            match = fits[0] if len(fits) == 1 else None
         if match is None:
-            print(f"  skipped {f.name}: no matching holdout case")
+            print(f"  skipped {f.name}: no matching holdout case (old file? thicknesses differ)")
+            continue
+        if match["id"] in ml_E and any(abs(e / m - 1) > 0.01 for e, m in zip(out["E"], ml_E[match["id"]])):
+            print(f"  skipped {f.name}: its moduli are not the current ML moduli for {match['id']} (old file?)")
+            continue
+        if match["id"] in found:
+            print(f"  skipped {f.name}: {match['id']} already has an ERAPave file")
             continue
         meas = [match["inputs"][d] for d in DEFL]
         calc = [out["defl"].get(float(x)) for x in ERAPAVE_X_CM]
@@ -550,11 +567,8 @@ def build_holdout():
 
 if __name__ == "__main__":
     build_dataset()
-    if BEFORE_DATASET.exists():
-        build_dataset(BEFORE_DATASET, "dataset_before.json", BEFORE_LIMITS, "Before (original bowls, old limits)")
     build_bounds()
     build_holdout()
     build_limits_compare()
-    build_option_datasets()
     build_temp_correction()
     build_c0_calc()
