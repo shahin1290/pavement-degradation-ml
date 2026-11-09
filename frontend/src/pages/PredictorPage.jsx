@@ -7,7 +7,8 @@ import {
 import { alpha } from '@mui/material/styles';
 
 import Section from '../components/Section';
-import ErapaveCheck from '../components/ErapaveCheck';
+import StrainPanel from '../components/StrainPanel';
+import BackcalcPanel from '../components/BackcalcPanel';
 import { predictModuli, getModelInfo } from '../services/api';
 import { INPUT_DEFINITIONS, INPUT_GROUPS, CORE_INPUTS, MODULI } from '../data/predictorInputs';
 import { EXAMPLE_CASES } from '../data/exampleCases';
@@ -28,7 +29,6 @@ function PredictorPage({ preset }) {
 
   // Holdout cases (never used for training); falls back to the built-in examples
   const [cases, setCases] = useState(EXAMPLE_CASES);
-  const [erapaveSummary, setErapaveSummary] = useState(null);
 
   // Ask the backend which inputs the current model needs
   useEffect(() => {
@@ -37,7 +37,6 @@ function PredictorPage({ preset }) {
       .then((h) => {
         if (!h.cases?.length) return;
         setCases(h.cases);
-        setErapaveSummary(h.erapave_summary);
         // start on the first holdout case, unless a case was sent from the Results page
         if (!preset) loadExample(h.cases.find((c) => c.id === 'holdout-1876-1') || h.cases[0]);
       })
@@ -115,21 +114,13 @@ function PredictorPage({ preset }) {
             >
               {cases.map((c) => (
                 <MenuItem key={c.id} value={c.id}>
-                  {c.label}{c.erapave?.ml ? ' — ✓ ERAPave check' : ''}
+                  {c.label}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
           <Button variant="outlined" size="small" onClick={clearForm}>Clear</Button>
         </Box>
-
-        {erapaveSummary && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            ERAPave check of the ML moduli: <strong>{erapaveSummary.cases}</strong> holdout cases,
-            median RMS <strong>{erapaveSummary.median_rms_pct}%</strong>,{' '}
-            {erapaveSummary.within_3} within 3% and {erapaveSummary.within_5} within 5%.
-          </Alert>
-        )}
 
         {example?.fromResults && (
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -188,7 +179,6 @@ function PredictorPage({ preset }) {
 
         {result && <Results result={result} />}
 
-        {example?.erapave && <ErapaveCheck check={example.erapave} measured={example.inputs} predicted={result} />}
       </Section>
 
       {modelInfo && <ModelInfo info={modelInfo} />}
@@ -244,6 +234,10 @@ function Results({ result }) {
           means several values fit the bowl almost equally well. The bar shows the range within the allowed limits for the layer.
         </Typography>
       )}
+
+      <BackcalcPanel backcalc={result.backcalc} ml={result} />
+
+      <StrainPanel strain={result.strain} />
     </Box>
   );
 }

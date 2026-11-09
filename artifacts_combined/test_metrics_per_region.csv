@@ -1,0 +1,25 @@
+tested_on,test_bowls,n,target,r2_log,mae_mpa,median_error_pct,p80_error_pct
+Östergötland,all,5316,E1,0.895,448.823,6.687,15.121
+Östergötland,all,5316,E2,0.89,39.317,9.319,19.921
+Östergötland,all,5316,E3,0.95,17.84,5.702,13.282
+Östergötland,all,5316,E4,0.992,10.621,2.022,4.681
+Östergötland,clean,4225,E1,0.9,355.561,6.153,13.256
+Östergötland,clean,4225,E2,0.903,29.898,8.151,16.363
+Östergötland,clean,4225,E3,0.964,14.901,5.021,11.105
+Östergötland,clean,4225,E4,0.998,6.981,1.72,3.637
+Västergötland,all,4875,E1,0.696,1164.755,14.362,33.316
+Västergötland,all,4875,E2,0.758,91.99,17.013,52.057
+Västergötland,all,4875,E3,0.912,19.463,6.715,17.606
+Västergötland,all,4875,E4,0.987,7.38,3.211,8.198
+Västergötland,clean,1823,E1,0.882,490.691,8.999,18.551
+Västergötland,clean,1823,E2,0.867,50.377,10.987,22.155
+Västergötland,clean,1823,E3,0.939,13.132,5.207,11.813
+Västergötland,clean,1823,E4,0.997,5.112,1.664,3.471
+Both regions,all,10191,E1,0.781,791.299,9.353,23.221
+Both regions,all,10191,E2,0.807,64.513,12.033,30.012
+Both regions,all,10191,E3,0.938,18.616,6.087,15.238
+Both regions,all,10191,E4,0.991,9.071,2.483,6.329
+Both regions,clean,6048,E1,0.893,396.292,6.836,14.987
+Both regions,clean,6048,E2,0.894,36.071,8.839,17.951
+Both regions,clean,6048,E3,0.96,14.368,5.084,11.246
+Both regions,clean,6048,E4,0.998,6.418,1.705,3.572

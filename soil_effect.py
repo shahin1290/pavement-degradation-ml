@@ -19,7 +19,9 @@ Robustness (the 7 points)
   7. R2 reported, plus how much of the variation is between locations vs between surveys at the same location
 
 Run:    uv run python soil_effect.py --excel "data/Uttag_temp_korr 20m_Östergötland_260910.xlsx"
-Writes: frontend/public/results/soil_effect.json, data/soil_effect/*.csv
+        uv run python soil_effect.py --backcalc data/backcalc_vg_full.csv --excel "data/Uttag_temp_korr 20m_Västergötland_260910.xlsx"
+                --json frontend/public/results/vg/soil_effect.json --outdir data/soil_effect_vg
+Writes: frontend/public/results/soil_effect.json, data/soil_effect/*.csv (or the --json / --outdir given)
 """
 import argparse
 import json
@@ -46,7 +48,9 @@ VERSIONS = {"A": "Main model", "B": "Within the same road", "C": "Without limit 
 SOIL_EN = {
     "Glacial lera": "Glacial clay", "Morän": "Moraine (till)", "Sandig morän": "Sandy moraine",
     "Isälvssediment": "Glaciofluvial sediment", "Lerig morän": "Clayey moraine", "Urberg": "Bedrock",
-    "Postglacial finsand": "Postglacial fine sand", "Other": "Other soils (mixed)",
+    "Postglacial finsand": "Postglacial fine sand", "Postglacial lera": "Postglacial clay",
+    "Postglacial sand": "Postglacial sand", "Postglacial silt": "Postglacial silt", "Glacial finlera": "Glacial fine clay",
+    "Other": "Other soils (mixed)",
 }
 # column -> (label, how the column is transformed into one "step", unit, is it only a control?)
 FACTORS = {
@@ -191,20 +195,33 @@ def fit_all(loc):
     return reg, r2, nloc, adjusted, soils
 
 
+def example_key(d, loc):
+    """A typical location for the worked example when EXAMPLE_KEY is not in this region:
+    all 4 surveys usable, no modulus at a limit, E3 closest to the median."""
+    ok = d.groupby("row_index").apply(lambda g: len(g) == 4 and g.usable.all() and (g.at_limit.fillna("") == "").all())
+    cand = loc[loc.index.isin(ok[ok].index)]
+    if cand.empty:
+        cand = loc
+    return cand.key.loc[(np.log(cand.E3) - np.log(cand.E3).median()).abs().idxmin()]
+
+
 # ---------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--backcalc", default=BACKCALC)
     ap.add_argument("--excel", default=EXCEL)
+    ap.add_argument("--json", default=OUT_JSON, help="website file to write")
+    ap.add_argument("--outdir", default=OUT_DIR, help="folder for the CSV tables")
     args = ap.parse_args()
+    out_json, out_dir = Path(args.json), Path(args.outdir)
 
     d = load(args.backcalc, args.excel)
     loc = per_location(d)
     reg, r2, nloc, adjusted, soils = fit_all(loc)
     vsplit = variance_split(d, loc)
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    reg.round(5).to_csv(OUT_DIR / "regression_all_versions.csv", index=False)
-    loc.to_csv(OUT_DIR / "locations.csv")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    reg.round(5).to_csv(out_dir / "regression_all_versions.csv", index=False)
+    loc.to_csv(out_dir / "locations.csv")
 
     def cell(e, f, v):
         q = reg[(reg.layer == e) & (reg.factor == f) & (reg.version == v)].iloc[0]
@@ -237,11 +254,12 @@ def main():
                 r[e]["robust"] = robust(e, f"soil:{s}") and s != "Other"
         soil_rows.append(r)
 
-    ex = d[d.key == EXAMPLE_KEY].sort_values("survey")
+    ex_key = EXAMPLE_KEY if (d.key == EXAMPLE_KEY).any() else example_key(d, loc)
+    ex = d[d.key == ex_key].sort_values("survey")
     example = None
     if len(ex):
-        lx = loc[loc.key == EXAMPLE_KEY]
-        example = {"key": EXAMPLE_KEY, "excel_row": int(ex.row_index.iloc[0]) + 2,
+        lx = loc[loc.key == ex_key]
+        example = {"key": ex_key, "excel_row": int(ex.row_index.iloc[0]) + 2,
                    "soil": ex.soil.iloc[0], "soil_en": SOIL_EN.get(ex.soil.iloc[0], ex.soil.iloc[0]),
                    "thk1": round(float(ex.thk1_mm.iloc[0])), "thk2": round(float(ex.thk2_mm.iloc[0])),
                    "thk3": round(float(ex.thk3_mm.iloc[0])), "taadt": float(ex.taadt.iloc[0]),
@@ -259,8 +277,8 @@ def main():
            "between_location_share": vsplit,
            "tests": int(reg[reg.version == "A"].shape[0]),
            "factors": factors, "soils": soil_rows, "example": example}
-    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    OUT_JSON.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     # ---------- console summary
     print(f"{len(loc)} locations, {loc.section.nunique()} roads, {loc.block.nunique()} blocks of {BLOCK_KM} km")
@@ -276,7 +294,7 @@ def main():
     for e in LAYERS:
         t[(e, "R")] = rb[e].map({True: "R", False: ""})
     print(t.sort_index(axis=1).to_string())
-    print(f"\nwrote {OUT_JSON.relative_to(ROOT)} and {OUT_DIR.relative_to(ROOT)}/")
+    print(f"\nwrote {out_json} and {out_dir}/")
 
 
 if __name__ == "__main__":

@@ -1,19 +1,20 @@
-// Loads the result files built by `python make_results_data.py`
-// (frontend/public/results/*.json). Each file is fetched once and cached.
+// Loads the result files built by `python make_results_data.py` (frontend/public/results/*.json)
+// and, for other regions, from a sub-folder (e.g. results/vg/). Each file is fetched once and cached.
 
 const cache = {};
 
-export function loadResults(name) {
-  if (!cache[name]) {
-    cache[name] = fetch(`/results/${name}.json`).then((r) => {
+export function loadResults(name, dir = '') {
+  const path = `${dir}${name}`;
+  if (!cache[path]) {
+    cache[path] = fetch(`/results/${path}.json`).then((r) => {
       if (!r.ok) {
-        throw new Error(`Could not load results/${name}.json (HTTP ${r.status}). Run make_results_data.py.`);
+        throw new Error(`Could not load results/${path}.json (HTTP ${r.status}).`);
       }
       return r.json();
     });
-    cache[name].catch(() => delete cache[name]); // allow a retry after an error
+    cache[path].catch(() => delete cache[path]); // allow a retry after an error
   }
-  return cache[name];
+  return cache[path];
 }
 
 /** { col: [v0, v1, ...] } -> [{ col: v0 }, { col: v1 }, ...] */

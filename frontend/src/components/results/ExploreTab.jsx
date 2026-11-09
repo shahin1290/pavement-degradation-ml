@@ -3,9 +3,10 @@ import { Box, Button, Chip, MenuItem, TextField, ToggleButton, ToggleButtonGroup
 
 import { toRows, toCsv, downloadCsv } from '../../services/results';
 import { useResults, Loading, SimpleTable, fmt, fmtPct } from './common';
+import { useRegion } from '../../services/region';
 
 const DEFL = ['D0', 'D130', 'D215', 'D300', 'D450', 'D600', 'D900', 'D1200', 'D1500'];
-const SURVEY_DATE = { 1: 'Aug 2022', 2: 'Sep 2023', 3: 'May 2024', 4: 'Sep 2024' };
+const DEFAULT_SURVEY_DATE = { 1: 'Aug 2022', 2: 'Sep 2023', 3: 'May 2024', 4: 'Sep 2024' };
 
 // The standard backcalculation: deflections corrected to 20 °C (own-data coefficients), compromise limits.
 // This is the ML training data (dataset.json, built by make_results_data.py).
@@ -17,11 +18,11 @@ const posKm = (key) => {
 const limitText = (l) => ['E1', 'E2', 'E3', 'E4'].map((e) => `${e} ${fmt(l[e][0])}–${fmt(l[e][1])}`).join(' · ');
 
 /** Case in the shape the predictor page expects */
-function toPredictorCase(r) {
+function toPredictorCase(r, region) {
   return {
-    id: `results-${r.row_index}-${r.survey}`,
+    id: `results-${region}-${r.row_index}-${r.survey}`,
     fromResults: true,
-    label: `Row ${r.row_index}, survey ${r.survey} (${r.key})${r.poor_fit ? ' — poor fit' : ''}`,
+    label: `${region}: row ${r.row_index}, survey ${r.survey} (${r.key})${r.poor_fit ? ' — poor fit' : ''}`,
     inputs: Object.fromEntries([...DEFL, 'thk1_mm', 'thk2_mm', 'thk3_mm'].map((c) => [c, r[c]])),
     backcalc: { E1: r.E1, E2: r.E2, E3: r.E3, E4: r.E4 },
   };
@@ -41,6 +42,8 @@ function Modulus({ e, v, limits }) {
 
 function ExploreTab({ onOpenInPredictor }) {
   const { data, error } = useResults('dataset');
+  const region = useRegion();
+  const SURVEY_DATE = data?.surveys || DEFAULT_SURVEY_DATE;
   const rows = useMemo(() => (data ? toRows(data.columns) : []), [data]);
   const [survey, setSurvey] = useState('all');
   const [fit, setFit] = useState('all');
@@ -107,7 +110,7 @@ function ExploreTab({ onOpenInPredictor }) {
       key: 'predict', label: '', align: 'center',
       format: (_, r) => (
         <Button size="small" variant="outlined" sx={{ py: 0, minWidth: 0, px: 1.25 }}
-          onClick={() => onOpenInPredictor(toPredictorCase(r))}>
+          onClick={() => onOpenInPredictor(toPredictorCase(r, region.name))}>
           Predict
         </Button>
       ),
@@ -125,11 +128,11 @@ function ExploreTab({ onOpenInPredictor }) {
         </Typography>
       </Box>
       <Typography color="text.secondary" sx={{ mb: 1 }}>
-        All backcalculated Östergötland cases (4 layers). Moduli E1–E4 in MPa. Click <strong>Predict</strong> to
+        All backcalculated {region.name} cases (4 layers). Moduli E1–E4 in MPa. Click <strong>Predict</strong> to
         compare the ML model with the backcalculation for any case.
       </Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', mb: 2 }}>
-        <Chip size="small" color="success" variant="outlined" label="good fit: RMS ≤ 5%, used for training" />
+        <Chip size="small" color="success" variant="outlined" label="good fit: RMS ≤ 5% (usable)" />
         <Chip size="small" color="warning" label="poor fit: RMS > 5%" />
         <Typography variant="body2" sx={{ color: 'warning.main', fontWeight: 700 }}>orange modulus</Typography>
         <Typography variant="body2" color="text.secondary">= on a limit</Typography>

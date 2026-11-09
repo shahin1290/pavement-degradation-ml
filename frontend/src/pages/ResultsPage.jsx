@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Box, ButtonBase, Typography } from '@mui/material';
 
 import Section from '../components/Section';
+import { REGIONS, RegionContext } from '../services/region';
 import SummaryTab from '../components/results/SummaryTab';
 import ExploreTab from '../components/results/ExploreTab';
 import TempCorrectionTab from '../components/results/TempCorrectionTab';
 import RoadProfileTab from '../components/results/RoadProfileTab';
 import SoilEffectTab from '../components/results/SoilEffectTab';
+import StrainConditionTab from '../components/results/StrainConditionTab';
 
 // The first entry opens by default.
 // To add a view: build its JSON in make_results_data.py,
@@ -17,6 +19,7 @@ const VIEWS = [
   { id: 'tempcorr', icon: '🌡️', label: 'Temperature correction', component: TempCorrectionTab },
   { id: 'roads', icon: '🛣️', label: 'Road profiles', component: RoadProfileTab },
   { id: 'soil', icon: '🪨', label: 'Road factors & soil', component: SoilEffectTab },
+  { id: 'strain', icon: '🚧', label: 'Road condition', component: StrainConditionTab },
 ];
 
 /** Compact segmented switch: one pill per view, the active one filled. */
@@ -52,17 +55,45 @@ function ViewSwitch({ value, onChange }) {
   );
 }
 
+/** Region choice: Östergötland / Västergötland. */
+function RegionSwitch({ value, onChange }) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
+      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>Region</Typography>
+      <Box sx={{ display: 'inline-flex', borderRadius: 2, border: 1, borderColor: 'primary.main', overflow: 'hidden' }}>
+        {REGIONS.map((r) => {
+          const active = r.id === value;
+          return (
+            <ButtonBase
+              key={r.id}
+              onClick={() => onChange(r.id)}
+              sx={{
+                px: 2.5, py: 0.9, fontWeight: 700, fontSize: '0.95rem',
+                bgcolor: active ? 'primary.main' : 'transparent', color: active ? '#fff' : 'primary.main',
+              }}
+            >
+              {r.name}
+            </ButtonBase>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}
+
 function ResultsPage({ onOpenInPredictor }) {
   const [viewId, setViewId] = useState(VIEWS[0].id);
+  const [regionId, setRegionId] = useState(REGIONS[0].id);
+  const region = REGIONS.find((r) => r.id === regionId);
   const Active = VIEWS.find((v) => v.id === viewId).component;
 
   return (
-    <Section
-      title="🧮 Backcalculation"
-      intro="Östergötland TSD data only (4 surveys, Aug 2022 – Sep 2024). This is the data the ML model is trained on."
-    >
-      <ViewSwitch value={viewId} onChange={setViewId} />
-      <Active onOpenInPredictor={onOpenInPredictor} />
+    <Section title="🧮 Backcalculation" intro={region.intro}>
+      <RegionContext.Provider value={region}>
+        <RegionSwitch value={regionId} onChange={setRegionId} />
+        <ViewSwitch value={viewId} onChange={setViewId} />
+        <Active key={region.id} onOpenInPredictor={onOpenInPredictor} />
+      </RegionContext.Provider>
     </Section>
   );
 }

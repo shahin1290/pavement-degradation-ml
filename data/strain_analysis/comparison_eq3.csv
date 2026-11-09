@@ -1,0 +1,2 @@
+bowls,median_ours,median_eq3,median_diff_ours_minus_eq3,pearson_r,spearman_r,pearson_r_without_limit_bowls,same_class_pct,within_one_class_pct
+26048,269.265,207.333,60.767,0.909,0.901,0.907,39.911,96.733

@@ -4,17 +4,20 @@ import {
 } from '@mui/material';
 
 import { loadResults } from '../../services/results';
+import { useRegion } from '../../services/region';
 
-/** Load a results file and show loading / error states. */
+/** Load a results file of the selected region and show loading / error states. */
 export function useResults(name) {
+  const { dir } = useRegion();
   const [state, setState] = useState({ data: null, error: null });
   useEffect(() => {
     let alive = true;
-    loadResults(name)
+    setState({ data: null, error: null });
+    loadResults(name, dir)
       .then((data) => alive && setState({ data, error: null }))
       .catch((error) => alive && setState({ data: null, error }));
     return () => { alive = false; };
-  }, [name]);
+  }, [name, dir]);
   return state;
 }
 

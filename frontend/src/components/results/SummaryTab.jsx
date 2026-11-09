@@ -2,6 +2,7 @@ import { Box, Chip, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
 import { useResults, Loading, SimpleTable, fmt, fmtPct } from './common';
+import { useRegion } from '../../services/region';
 
 // Unrealistic = the bowl fits well WITHOUT limits, but a modulus is more than 2 % outside the limits.
 
@@ -109,11 +110,14 @@ function SummaryTab() {
   const ds = useResults('dataset');
   const bd = useResults('bounds');
   const lc = useResults('limits_compare_own');
-  if (!ds.data || !bd.data || !lc.data) return <Loading error={ds.error || bd.error || lc.error} />;
+  const region = useRegion();
+  // bounds / limits_compare exist only where the extra runs (without limits, other limit sets) were made
+  if (!ds.data || !(bd.data || bd.error) || !(lc.data || lc.error)) return <Loading error={ds.error} />;
+  const hasLimitRuns = Boolean(bd.data && lc.data);
 
   const t = ds.data.total;
   const b = bd.data;
-  const opts = lc.data.options || [];
+  const opts = lc.data?.options || [];
   const comp = opts.find((o) => o.id === 'comp');
   const neu = opts.find((o) => o.id === 'new');
   const order = [neu, comp].filter(Boolean);
@@ -127,13 +131,26 @@ function SummaryTab() {
       >
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           <Chip variant="outlined" color="primary" label="Park et al. (2002) equation" />
-          <Chip variant="outlined" color="primary" label="C0 = 2.45E-05, A = −8.24E-08 (fitted on our data)" />
+          <Chip variant="outlined" color="primary" label={`C0 = ${region.C0}, A = ${region.A} (fitted on the ${region.name} data)`} />
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           After the correction E1 no longer depends on the temperature (see “Temperature correction”).
         </Typography>
       </Step>
 
+      {!hasLimitRuns && (
+        <Step
+          n={2}
+          title="Backcalculate all data with the compromise limits"
+          subtitle={`The limits were chosen on the Östergötland data (steps 2–4 there: runs without limits and with a stricter set). ${region.name} was backcalculated directly with the same compromise limits; those comparison runs were not repeated for this region.`}
+        >
+          <Typography variant="body2" color="text.secondary">
+            Same model and settings as Östergötland: 4 layers, 50 kN wheel at 800 kPa, Poisson 0.35 / 0.35 / 0.35 / 0.40.
+          </Typography>
+        </Step>
+      )}
+
+      {hasLimitRuns && (<>
       <Step
         n={2}
         title="Backcalculate all data without limits"
@@ -207,7 +224,9 @@ function SummaryTab() {
         </Box>
       </Step>
 
-      <Step n={5} last title={`${fmt(t.good_fit)} bowls train the ML model`}>
+      </>)}
+
+      <Step n={5} last title={region.id === 'og' ? `${fmt(t.good_fit)} bowls train the ML model` : `${fmt(t.good_fit)} usable bowls`}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
           <Stat value={fmt(t.cases)} label={`bowls: ${fmt(t.cases / 4)} locations × 4 surveys`} color="primary" />
           <Stat value={fmt(t.good_fit)} label="usable with the compromise limits (fit within 5%)" color="success" />

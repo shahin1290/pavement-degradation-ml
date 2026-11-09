@@ -13,7 +13,7 @@ import { useResults, Loading, SimpleTable, fmt, fmtPct } from './common';
 // Road profiles: backcalculated results along each road, one line per survey.
 // Data: dataset.json (the training data, deflections corrected to 20 °C, compromise limits).
 
-const SURVEYS = [
+const SURVEY_STYLE = [
   { s: 1, date: 'Aug 2022', color: '#2a78d6' },
   { s: 2, date: 'Sep 2023', color: '#eb6834' },
   { s: 3, date: 'May 2024', color: '#1baf7a' },
@@ -73,6 +73,8 @@ const median = (a) => {
 function RoadProfileTab() {
   const theme = useTheme();
   const { data, error } = useResults('dataset');
+  // survey dates of the selected region (from the data file)
+  const SURVEYS = SURVEY_STYLE.map((x) => ({ ...x, date: data?.surveys?.[x.s] || x.date }));
   const rows = useMemo(() => (data ? toRows(data.columns) : []), [data]);
 
   // sections (road + county prefix), biggest first

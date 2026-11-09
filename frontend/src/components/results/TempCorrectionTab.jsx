@@ -5,11 +5,12 @@ import { alpha } from '@mui/material/styles';
 import { useResults, Loading, SimpleTable, fmt } from './common';
 import C0Calculation from './C0Calculation';
 import E1TempChart from './E1TempChart';
+import { useRegion } from '../../services/region';
 
 // What the temperature correction does to E1: no correction vs own data vs Park statewide (data: temp_correction.json).
 const CASES = [
   { id: 'none', name: 'No correction', color: 'text.secondary', what: 'Measured bowls used as they are' },
-  { id: 'own', name: 'Own data', color: 'primary.main', what: 'Corrected to 20 °C with C0 = 2.45E-05 (fitted on our data)' },
+  { id: 'own', name: 'Own data', color: 'primary.main', what: 'Corrected to 20 °C with C0 = {C0} (fitted on this region\'s data)' },
   { id: 'state', name: 'Park statewide', color: 'warning.dark', what: 'Corrected to 20 °C with C0 = 4.65E-05 (North Carolina)' },
 ];
 const pctText = (v) => `${v > 0 ? '+' : ''}${fmt(v, 1)}%`;
@@ -46,10 +47,11 @@ function CaseCard({ c, trend }) {
 
 function TempCorrectionTab() {
   const { data, error } = useResults('temp_correction');
+  const region = useRegion();
   const [showC0, setShowC0] = useState(false);
   if (!data) return <Loading error={error} />;
   const trend = Object.fromEntries(data.e1_trend.map((r) => [r.id, r]));
-  const cases = CASES.filter((c) => trend[c.id]);
+  const cases = CASES.filter((c) => trend[c.id]).map((c) => ({ ...c, what: c.what.replace('{C0}', region.C0) }));
   const ex = data.example;
   const first = ex?.rows[0];
   const last = ex?.rows[ex.rows.length - 1];
@@ -62,9 +64,15 @@ function TempCorrectionTab() {
         Measured at the same location on different survey days.
       </Typography>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: `repeat(${cases.length}, 1fr)` }, gap: 2 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: `repeat(${Math.max(cases.length, 2)}, 1fr)` }, gap: 2 }}>
         {cases.map((c) => <CaseCard key={c.id} c={c} trend={trend[c.id]} />)}
       </Box>
+      {data.no_uncorrected_run && (
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+          For {region.name} only the corrected bowls were backcalculated, so there is no “no correction” E1 to compare with.
+          The goal is still 0% per °C.
+        </Typography>
+      )}
 
       {data.e1_vs_dt && (
         <>
@@ -102,7 +110,7 @@ function TempCorrectionTab() {
 
       <Box sx={{ mt: 4, pt: 2.5, borderTop: 1, borderColor: 'divider' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h6">How C0 = 2.45E-05 and A = −8.24E-08 were calculated</Typography>
+          <Typography variant="h6">How C0 = {region.C0} and A = {region.A} were calculated</Typography>
           <Button size="small" variant={showC0 ? 'outlined' : 'contained'} onClick={() => setShowC0((v) => !v)}>
             {showC0 ? 'Hide steps' : 'Show step by step'}
           </Button>

@@ -32,9 +32,10 @@ function Tip({ active, label, data }) {
 
 function E1TempChart({ data, e20, ownMedian }) {
   const theme = useTheme();
-  if (!data?.none) return null;
+  const base = data?.none || data?.own;
+  if (!base) return null;
   const axis = { fill: theme.palette.text.secondary, fontSize: 12 };
-  const xs = data.none.points.map((p) => p.dT);
+  const xs = base.points.map((p) => p.dT);
   const ticks = xs.filter((v, i) => xs.indexOf(v) === i);
 
   return (
@@ -62,7 +63,7 @@ function E1TempChart({ data, e20, ownMedian }) {
       <Typography variant="body2" color="text.secondary">
         Each location is compared with itself, and the general level of each survey day (season, moisture) is removed,
         so only the effect of temperature remains. A flat line at 0% means E1 does not depend on temperature.
-        Without correction E1 falls on warmer days; after the correction the line is flat.
+        {data.none ? ' Without correction E1 falls on warmer days; after the correction the line is flat.' : ''}
       </Typography>
       {e20 && ownMedian && (
         <Box sx={{ mt: 2, p: 1.5, borderRadius: 2, bgcolor: 'action.hover', display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center' }}>

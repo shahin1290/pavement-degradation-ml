@@ -44,6 +44,41 @@ class Reliability(BaseModel):
     coverage: float = Field(..., description="Target share of true values inside the range")
 
 
+class StrainResult(BaseModel):
+    """Critical strains from the predicted moduli, and the condition grade (see services/strain.py)."""
+    asphalt_tension_ue: float = Field(..., description="Horizontal strain at the bottom of the asphalt (microstrain), cracking")
+    subgrade_compression_ue: float = Field(..., description="Vertical strain at the top of the subgrade (microstrain), rutting")
+    trafikverket_ue: float = Field(..., description="Asphalt strain from the deflections, Trafikverket formula (TRVMB 114)")
+    grade_ours: str = Field(..., description="Condition grade from our strain (Finnish limits)")
+    grade_trafikverket: str = Field(..., description="Condition grade from the Trafikverket strain")
+    grade_limits_ue: List[float]
+    cracking_damage_vs_typical: float = Field(..., description="Damage per truck compared with a typical road (strain^4)")
+    rutting_damage_vs_typical: float
+    typical_asphalt_ue: float
+    typical_subgrade_ue: float
+    load: str
+
+
+class BackcalcResult(BaseModel):
+    """Physics backcalculation of the same bowl (services/backcalc.py), same settings as ERAPave / the Excel results."""
+    E1_Asphalt_MPa: float
+    E2_Base_MPa: float
+    E3_Subbase_MPa: float
+    E4_Subgrade_MPa: float
+    fit_rms_pct: float = Field(..., description="Difference between the calculated and the measured bowl (RMS, %)")
+    fit_max_error_pct: float
+    usable: bool = Field(..., description="True if fit_rms_pct <= 5 %")
+    at_limit: List[str] = Field(default_factory=list, description="Moduli stuck at an allowed limit, e.g. E3_min")
+    sensors_mm: List[float]
+    measured_um: List[float]
+    bowl_backcalc_um: List[float] = Field(..., description="Bowl calculated from the backcalculated moduli")
+    bowl_ml_um: Optional[List[float]] = Field(None, description="Bowl calculated from the ML moduli")
+    ml_fit_rms_pct: Optional[float] = None
+    ml_fit_max_error_pct: Optional[float] = None
+    limits_MPa: Dict[str, List[float]]
+    seconds: Optional[float] = None
+
+
 class PredictionResponse(BaseModel):
     E1_Asphalt_MPa: float = Field(..., description="Predicted asphalt layer modulus")
     E2_Base_MPa: float = Field(..., description="Predicted base layer modulus")
@@ -55,6 +90,12 @@ class PredictionResponse(BaseModel):
     )
     reliability: Optional[Reliability] = Field(
         None, description="Reliability check (only if artifacts/reliability.pkl exists)"
+    )
+    strain: Optional[StrainResult] = Field(
+        None, description="Critical strains and condition grade calculated from the predicted moduli"
+    )
+    backcalc: Optional[BackcalcResult] = Field(
+        None, description="Physics backcalculation of the same bowl, to compare with the ML prediction"
     )
 
 

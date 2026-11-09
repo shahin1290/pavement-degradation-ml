@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
 import { useResults, Loading, SimpleTable, fmt } from './common';
+import { useRegion } from '../../services/region';
 
 // Step-by-step: how C0 and A were calculated from our data (data: c0_calc.json).
 // Same content as How_C0_is_calculated.pdf.
@@ -44,6 +45,7 @@ function P({ children }) {
 
 function C0Calculation() {
   const { data, error } = useResults('c0_calc');
+  const region = useRegion();
   if (!data) return <Loading error={error} />;
   const ex = data.example;
   const r1 = ex.rows[0];
@@ -56,7 +58,7 @@ function C0Calculation() {
     <Box>
       <Typography color="text.secondary" sx={{ mb: 1 }}>
         Following Park, Kim &amp; Park (2002), <i>Temperature Correction of Multiload-Level FWD Deflections</i>, TRR 1806,
-        applied to the original (not corrected) Östergötland TSD bowls.
+        applied to the original (not corrected) {region.name} TSD bowls.
       </Typography>
 
       <H n={1}>Two equations from the paper</H>
@@ -115,7 +117,7 @@ function C0Calculation() {
       </Eq>
       <P>
         Things that affect a whole survey day (moisture, season, device) are not mistaken for temperature.
-        For example, the far sensor D1500 is about 30 µm in May 2024 but 110 µm in Sep 2023.{' '}
+        For example, in Östergötland the far sensor D1500 is about 30 µm in May 2024 but 110 µm in Sep 2023.{' '}
         <i>This step is not in the paper</i> (Park tested 11 sections many times); it is the standard
         “two-way fixed effects” regression. Without it, C would grow with distance, which contradicts the paper.
       </P>
@@ -175,7 +177,7 @@ function C0Calculation() {
       <H n={10}>Result</H>
       <SimpleTable
         rows={[...data.park.map((p) => ({ ...p, src: 'Park et al. (2002), Table 3' })),
-          { name: 'Östergötland TSD', C0: L.C0, A: L.A, src: 'this calculation', ours: true }]}
+          { name: `${region.name} TSD`, C0: L.C0, A: L.A, src: 'this calculation', ours: true }]}
         highlight={(r) => r.ours}
         columns={[
           { key: 'name', label: '', align: 'left', format: (v, r) => (r.ours ? <b>{v}</b> : v) },
@@ -185,8 +187,8 @@ function C0Calculation() {
         ]}
       />
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        Our asphalt reacts about half as strongly to temperature as the North Carolina asphalt. The check is at the top of this page:
-        with our values E1 no longer depends on temperature.
+        Our asphalt reacts about {fmt((100 * L.C0) / data.park[0].C0, 0)}% as strongly to temperature as the North Carolina
+        asphalt (Park statewide). The check is at the top of this page: with our values E1 no longer depends on temperature.
       </Typography>
     </Box>
   );
