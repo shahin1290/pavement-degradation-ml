@@ -48,7 +48,10 @@ def main():
     ap.add_argument("--excel", default="data/Uttag_temp_korr 20m_Östergötland_260910.xlsx")
     ap.add_argument("--out", default="data/strain_analysis")
     ap.add_argument("--json", default="frontend/public/results/strain_condition.json")
+    ap.add_argument("--points", default=None,
+                    help="website file with every point for the filter table (default: strain_points.json next to --json)")
     a = ap.parse_args()
+    a.points = a.points or os.path.join(os.path.dirname(a.json), "strain_points.json")
     os.makedirs(a.out, exist_ok=True)
     global SURVEYS
     dates = pd.read_csv(a.backcalc, usecols=["survey", "survey_date"]).groupby("survey").survey_date.agg(lambda v: v.mode().iat[0])
@@ -209,6 +212,23 @@ def main():
     with open(a.json, "w", encoding="utf-8") as f:
         json.dump(web, f, ensure_ascii=False, separators=(",", ":"))
     print(f"\nwrote {a.json} (website tab 'Road condition')")
+
+    # ---- every point, for the filter table on the website (columns -> lists, compact)
+    pts = d.sort_values(["road", "km", "survey"])
+    cols = {"road": pts.road.astype(str), "km": pts.km.round(3), "survey": pts.survey.astype(int),
+            "thk1": pts.thk1_mm.round(0), "thk2": pts.thk2_mm.round(0), "thk3": pts.thk3_mm.round(0),
+            "E1": pts.E1.round(0), "E2": pts.E2.round(0), "E3": pts.E3.round(0), "E4": pts.E4.round(0),
+            "D0": pts.D0.round(0), "ours": pts.asphalt_tension_ue.round(2), "eq3": pts.strain_eq3.round(2),
+            "subgrade": pts.subgrade_compression_ue.round(0), "heavy": pts.taadt.round(0),
+            "at_limit": pts.at_limit.fillna("").astype(str), "key": pts.key.astype(str)}
+    def lst(v):
+        return [None if pd.isna(x) else (int(x) if isinstance(x, (float, np.floating)) and float(x).is_integer() else
+                                         (float(x) if isinstance(x, (float, np.floating)) else (int(x) if isinstance(x, (int, np.integer)) else x)))
+                for x in v]
+    with open(a.points, "w", encoding="utf-8") as f:
+        json.dump({"surveys": {int(k): v for k, v in SURVEYS.items()}, "classes": CLASSES, "limits": LIMITS["strain"],
+                   "columns": {k: lst(v) for k, v in cols.items()}}, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"wrote {a.points} ({len(pts):,} points, filter table in the 'Road condition' tab)")
 
 
 if __name__ == "__main__":

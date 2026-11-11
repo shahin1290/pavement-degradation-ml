@@ -9,6 +9,7 @@ import TempCorrectionTab from '../components/results/TempCorrectionTab';
 import RoadProfileTab from '../components/results/RoadProfileTab';
 import SoilEffectTab from '../components/results/SoilEffectTab';
 import StrainConditionTab from '../components/results/StrainConditionTab';
+import NotesTab from '../components/results/NotesTab';
 
 // The first entry opens by default.
 // To add a view: build its JSON in make_results_data.py,
@@ -20,6 +21,7 @@ const VIEWS = [
   { id: 'roads', icon: '🛣️', label: 'Road profiles', component: RoadProfileTab },
   { id: 'soil', icon: '🪨', label: 'Road factors & soil', component: SoilEffectTab },
   { id: 'strain', icon: '🚧', label: 'Road condition', component: StrainConditionTab },
+  { id: 'notes', icon: '📝', label: 'Notes', component: NotesTab },
 ];
 
 /** Compact segmented switch: one pill per view, the active one filled. */
