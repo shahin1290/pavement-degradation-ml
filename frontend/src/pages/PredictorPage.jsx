@@ -196,7 +196,7 @@ const PRECISION = [
   { max: Infinity, color: 'warning', label: 'Poorly determined' },
 ];
 
-// Can this measurement be trusted? From the chance of unrealistic moduli for similar bowls.
+// Can this measurement be trusted? From the chance of an unreliable backcalculation for similar bowls (both regions).
 const TRUST = [
   { max: 0.2, color: 'success', title: 'Trustworthy measurement', icon: '✓' },
   { max: 0.5, color: 'info', title: 'Use with some care', icon: '◐' },
@@ -298,8 +298,8 @@ function TrustBanner({ rel }) {
         <Chip size="small" color={level.color} label={`${pct}% risk`} />
       </Box>
       <Typography variant="body2" sx={{ mt: 0.75 }}>
-        Of earlier measurements with a similar deflection bowl, <b>{pct} in 100</b> could only be explained with
-        unrealistic layer stiffness (outside the normal range for asphalt, base or soil).
+        Of earlier measurements with a similar deflection bowl (Östergötland and Västergötland), <b>{pct} in 100</b> gave an
+        unreliable backcalculation: a poor fit, or a layer stiffness stuck at the edge of the realistic range.
         {level.color === 'success' && ' This bowl looks like a normal road, so the values below are meaningful.'}
         {level.color === 'info' && ' Look at the expected ranges before using the values.'}
         {level.color === 'warning' && ' Something may be unusual here (e.g. wrong layer thickness or a damaged layer); check before using the values.'}

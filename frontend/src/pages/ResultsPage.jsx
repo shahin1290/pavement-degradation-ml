@@ -19,7 +19,7 @@ const VIEWS = [
   { id: 'process', icon: '🧭', label: 'How the data was built', component: SummaryTab },
   { id: 'tempcorr', icon: '🌡️', label: 'Temperature correction', component: TempCorrectionTab },
   { id: 'roads', icon: '🛣️', label: 'Road profiles', component: RoadProfileTab },
-  { id: 'soil', icon: '🪨', label: 'Road factors & soil', component: SoilEffectTab },
+  { id: 'soil', icon: '🪨', label: 'Road factors, soil & moisture', component: SoilEffectTab },
   { id: 'strain', icon: '🚧', label: 'Road condition', component: StrainConditionTab },
   { id: 'notes', icon: '📝', label: 'Notes', component: NotesTab },
 ];

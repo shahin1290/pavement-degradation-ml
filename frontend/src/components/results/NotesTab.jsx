@@ -2,7 +2,8 @@ import { Box, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typograph
 import { alpha } from '@mui/material/styles';
 
 // "Notes" tab: short notes for the discussion with the supervisor.
-// Note 1: why Västergötland gives fewer clean backcalculation results.
+// Note 1: why Västergötland gives fewer clean backcalculation results. Note 2: why rain is not in the regression.
+// Note 3: planned later (maintenance priority).
 // Numbers: backcalc_vg_full.csv and backcalc_rows0-7050_full.csv
 // (clean = fit within 5 % and no modulus at a limit; total = asphalt + base + subbase).
 const ROWS = [
@@ -77,10 +78,6 @@ function VasterNote() {
         The bowl still fits, but those values are not real. Wrong or missing layer thicknesses in the database would have the same effect.
       </Typography>
       <Typography variant="body2" sx={{ mt: 1 }}>
-        <b>Not the cause:</b> the temperature correction (the surveys were close to 20 °C, it changes D0 by only 0.4%) and the method
-        (on thick roads Västergötland gives 58% clean results, much closer to Östergötland's 70%).
-      </Typography>
-      <Typography variant="body2" sx={{ mt: 1 }}>
         <b>What can be trusted:</b> E2 and especially E4 (subgrade) everywhere; E1 and E3 mainly on roads thicker than about 1 m.
       </Typography>
     </Paper>
@@ -94,23 +91,58 @@ function PlannedNote() {
       sx={{ p: 2.5, mb: 3, borderLeft: 5, borderColor: 'info.main', bgcolor: (t) => alpha(t.palette.info.main, 0.05) }}
     >
       <Typography variant="h6" sx={{ mb: 0.5 }}>Planned for a later iteration: where should maintenance happen first?</Typography>
-      <Typography variant="body2" sx={{ mb: 1 }}>
+      <Typography variant="body2">
         Idea: rank 500 m road stretches by expected damage, using the strains from the layer stiffness and the heavy traffic:
         {' '}<b>damage index = heavy vehicles per day × (strain ÷ typical strain)⁴</b> (power 4 as in Saliko &amp; Erlingsson 2021),
         for cracking (asphalt strain) and rutting (subgrade strain).
       </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 700 }}>Why it is not shown yet</Typography>
-      <Box component="ul" sx={{ mt: 0.5, mb: 0, pl: 3, '& li': { mb: 0.5 } }}>
+    </Paper>
+  );
+}
+
+function RainNote() {
+  const rows = [
+    { region: 'Östergötland', s1: '9–15', s2: '48–56', s3: '14–19', s4: '8–14' },
+    { region: 'Västergötland', s1: '2–7', s2: '63–73', s3: '14–19', s4: '36–43' },
+  ];
+  return (
+    <Paper
+      variant="outlined"
+      sx={{ p: 2.5, mb: 3, borderLeft: 5, borderColor: 'info.main', bgcolor: (t) => alpha(t.palette.info.main, 0.05) }}
+    >
+      <Typography variant="h6" sx={{ mb: 0.5 }}>Why rain is not in the regression</Typography>
+      <Typography variant="body2" sx={{ mb: 1.5 }}>
+        The rain column (<code>PCIP_14_DAYS</code>, rain in the 14 days before the survey) is almost the same for every location
+        on a survey day. Within a survey it differs by only a few mm; between surveys by up to 60 mm:
+      </Typography>
+      <Box sx={{ overflowX: 'auto', mb: 1.5 }}>
+        <Table size="small" sx={{ maxWidth: 560 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>Rain (mm)</TableCell>
+              <TableCell align="right">Survey 1</TableCell>
+              <TableCell align="right">Survey 2</TableCell>
+              <TableCell align="right">Survey 3</TableCell>
+              <TableCell align="right">Survey 4</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.region}>
+                <TableCell>{r.region}</TableCell>
+                <TableCell align="right">{r.s1}</TableCell>
+                <TableCell align="right">{r.s2}</TableCell>
+                <TableCell align="right">{r.s3}</TableCell>
+                <TableCell align="right">{r.s4}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Box>
+      <Box component="ul" sx={{ mt: 0, mb: 1, pl: 3, '& li': { mb: 0.5 } }}>
         <li><Typography variant="body2">
-          Many stretches have uncertain stiffness (moduli at a limit), especially on thin roads: in Västergötland 201 of 325 stretches
-          would have to be left out.
-        </Typography></li>
-        <li><Typography variant="body2">
-          The index only ranks stretches. A remaining life in years needs the Trafikverket design coefficients (TRVK Väg) and the age
-          of each road.
-        </Typography></li>
-        <li><Typography variant="body2">
-          The subgrade strain changes strongly with season and moisture, so the rutting ranking needs a decision on which survey to use.
+          So in practice there are only <b>4 rain values per region</b>, one per survey day. Rain cannot be separated from
+          everything else that differs between survey days (season, groundwater level of that year, the measurement itself).
         </Typography></li>
       </Box>
     </Paper>
@@ -121,6 +153,7 @@ function NotesTab() {
   return (
     <>
       <VasterNote />
+      <RainNote />
       <PlannedNote />
     </>
   );

@@ -61,6 +61,14 @@ function ExploreTab({ onOpenInPredictor }) {
     && (road === 'all' || r.road === road)
     && (fit === 'all' || (fit === 'good' ? !r.poor_fit : r.poor_fit))), [rows, survey, road, fit]);
 
+  // usable bowls with a modulus at a limit (overall and per layer)
+  const lim = useMemo(() => {
+    const usable = rows.filter((r) => !r.poor_fit);
+    const at = usable.filter((r) => r.at_limit);
+    const per = Object.fromEntries(['E1', 'E2', 'E3', 'E4'].map((e) => [e, usable.filter((r) => (r.at_limit || '').includes(`${e}_`)).length]));
+    return { usable: usable.length, at: at.length, clean: usable.length - at.length, per };
+  }, [rows]);
+
   if (!data) return <Loading error={error} />;
 
   const columns = [
@@ -126,6 +134,13 @@ function ExploreTab({ onOpenInPredictor }) {
           <b>{fmt(data.total.good_fit)}</b> of {fmt(data.total.cases)} cases fit within 5%{' '}
           (<b>{fmtPct((100 * data.total.good_fit) / data.total.cases)}</b>), median fit {fmt(data.total.median_rms, 2)}%.
         </Typography>
+        {lim.usable > 0 && (
+          <Typography variant="body2" sx={{ mt: 0.5 }}>
+            Of these, <b>{fmt(lim.at)}</b> (<b>{fmtPct((100 * lim.at) / lim.usable)}</b>) have a modulus at a limit
+            {' '}({['E1', 'E2', 'E3', 'E4'].map((e) => `${e} ${fmtPct((100 * lim.per[e]) / lim.usable)}`).join(' · ')});
+            {' '}<b>{fmt(lim.clean)}</b> (<b>{fmtPct((100 * lim.clean) / data.total.cases)}</b> of all cases) fit within 5% with no modulus at a limit.
+          </Typography>
+        )}
       </Box>
       <Typography color="text.secondary" sx={{ mb: 1 }}>
         All backcalculated {region.name} cases (4 layers). Moduli E1–E4 in MPa. Click <strong>Predict</strong> to

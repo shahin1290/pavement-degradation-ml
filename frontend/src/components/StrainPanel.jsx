@@ -7,7 +7,6 @@ const GRADE_COLORS = {
   Good: '#2e8b57', Adequate: '#9acd32', Satisfactory: '#f2c94c', Alarming: '#f2994a', Deteriorating: '#d64545',
 };
 const fmt = (v, d = 0) => Number(v).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d });
-const times = (v) => (v >= 10 ? `${fmt(v)}×` : `${fmt(v, 1)}×`);
 
 function Step({ n, title, text, last }) {
   return (
@@ -72,10 +71,10 @@ function StrainPanel({ strain }) {
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         A standard truck wheel ({s.load}) is put on the road with the predicted stiffness. The layered elastic model (same result as
-        ERAPave, within 0.34%) gives how much the asphalt stretches at its bottom (cracking) and how much the soil is squeezed (rutting).
+        ERAPave, within 0.34%) gives how much the asphalt stretches at its bottom: the more it stretches, the sooner it cracks.
       </Typography>
 
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '3fr 2fr' } }}>
+      <Box sx={{ maxWidth: 760 }}>
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Typography variant="body2" color="text.secondary">Cracking risk: asphalt stretching at its bottom</Typography>
           <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mt: 1 }}>
@@ -91,28 +90,13 @@ function StrainPanel({ strain }) {
             </Box>
           </Box>
           <GradeScale limits={s.grade_limits_ue} ours={s.asphalt_tension_ue} tv={s.trafikverket_ue} />
-          <Typography variant="body2">
-            Damage per truck compared with a typical road ({fmt(s.typical_asphalt_ue)} µε): <b>{times(s.cracking_damage_vs_typical)}</b>
-          </Typography>
-        </Paper>
-
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Typography variant="body2" color="text.secondary">Rutting risk: soil squeezed at the top of the subgrade</Typography>
-          <Typography variant="h5" sx={{ mt: 1 }}>{fmt(s.subgrade_compression_ue)} µε</Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Damage per truck compared with a typical road ({fmt(s.typical_subgrade_ue)} µε): <b>{times(s.rutting_damage_vs_typical)}</b>
-          </Typography>
-          <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 1 }}>
-            No grade: the Finnish limits only exist for the asphalt strain. The subgrade value changes strongly with season and moisture.
-          </Typography>
         </Paper>
       </Box>
 
       <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 1.5 }}>
         Grades: Good &lt; 100, Adequate 100–200, Satisfactory 200–300, Alarming 300–400, Deteriorating &gt; 400 µε (Saarenketo &amp; Männistö 2024).
         Trafikverket formula: ε = 37.4 + 0.988·D0 − 0.553·D200 − 0.502·D600 (TRVMB 114, 2012), made for FWD; over all our data our
-        method gives about 30% higher values but the same ranking (r = 0.91). Damage grows with strain to the power 4 (Saliko &amp; Erlingsson 2021),
-        so 20% more strain means about twice the damage. This compares roads; it is not a remaining life in years.
+        method gives higher values but the same ranking (r = 0.91 in Östergötland, 0.92 in Västergötland).
       </Typography>
     </Box>
   );

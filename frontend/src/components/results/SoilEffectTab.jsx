@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Button, Collapse, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import {
@@ -6,40 +6,40 @@ import {
 } from 'recharts';
 
 import { useResults, Loading, SimpleTable, fmt } from './common';
+import { loadResults } from '../../services/results';
 
-// Road factors and soil type vs the layer moduli, with robustness checks
-// (data: soil_effect.json, built by soil_effect.py).
+// Road factors, soil type and moisture vs the layer moduli
+// (data: soil_effect.json from soil_effect.py; moisture_surveys.json from moisture_effect.py, both regions).
+// Every result in three versions: A main model, B within the same road, C without limit values.
+// ✓ robust = significant with the same sign in A, B and C.
 const LAYERS = [
   { id: 'E1', name: 'E1 asphalt' }, { id: 'E2', name: 'E2 base' },
   { id: 'E3', name: 'E3 subbase' }, { id: 'E4', name: 'E4 subgrade' },
 ];
-const VERSION_IDS = ['A', 'B', 'C'];
 const pct = (v, d = 0) => (v == null ? '–' : `${v > 0 ? '+' : ''}${fmt(v, d)}%`);
 
 const NOTES = {
-  thk1: 'Control only: thickness is an input of the backcalculation itself, so this is mostly a calculation effect.',
-  thk2: 'Control only: thickness is an input of the backcalculation itself.',
-  thk3: 'Control only: thickness is an input of the backcalculation itself.',
-  taadt: 'Busier roads are stiffer, also within the same road. Traffic itself does not make a road stiffer: busier stretches are likely built and maintained to a higher standard.',
-  ditch: 'No effect in any version.',
-  ghum: 'Small but robust. Meaning of ghum_max still to be confirmed with the data provider.',
+  taadt: 'Traffic itself does not make a road stiffer: busier stretches are likely built and maintained to a higher standard.',
+  ghum: 'Meaning of ghum_max still to be confirmed with the data provider.',
 };
 
 function SubTitle({ children }) {
   return <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 3.5, mb: 1 }}>{children}</Typography>;
 }
 
-/** "+45%*" for one version: bold when significant, grey when not, "n/a" when it cannot be estimated. */
+/** "+45%" for one version: bold when significant, grey when not, "n/a" when it cannot be estimated. */
 function Eff({ c }) {
   if (!c) return <span style={{ opacity: 0.5 }}>n/a</span>;
   return c.sig ? <b>{pct(c.pct)}</b> : <span style={{ opacity: 0.55 }}>{pct(c.pct)}</span>;
 }
 
+/** Robust column: ✓ robust or no. */
 function Robust({ v }) {
   return v
-    ? <Box component="span" sx={{ fontWeight: 700, color: 'success.dark' }}>robust</Box>
+    ? <Box component="span" sx={{ fontWeight: 800, color: 'success.dark' }}>✓ robust</Box>
     : <Box component="span" sx={{ color: 'text.secondary' }}>no</Box>;
 }
+
 
 function Tip({ active, payload, layer }) {
   if (!active || !payload?.length) return null;
@@ -48,7 +48,7 @@ function Tip({ active, payload, layer }) {
     <Box sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 2, p: 1.25, boxShadow: 2, fontSize: 13 }}>
       <b>{r.soil_en}</b> ({r.soil}), {fmt(r.locations)} locations<br />
       Typical {layer} (adjusted): <b>{fmt(r.adjusted)} MPa</b> {r.reference ? '(reference)' : `(${pct(r.adjusted_pct)} vs glacial clay)`}<br />
-      {!r.reference && (r.robust ? 'Robust: significant in all three versions' : 'Not robust')}
+      {!r.reference && (r.robust ? '✓ Robust (A, B and C)' : 'Not robust')}
     </Box>
   );
 }
@@ -90,12 +90,12 @@ function Findings({ data, layer, name }) {
         {soils.map((s) => (
           <Typography component="li" variant="body2" key={s.soil}>
             <b>{s.soil_en}</b>: {fmt(s[layer].adjusted)} MPa vs {fmt(data.soils.find((r) => r.reference)[layer].adjusted)} MPa
-            on glacial clay ({pct(s[layer].adjusted_pct)}; range over the three versions {pct(Math.min(...VERSION_IDS.map((v) => s[layer][v]?.pct ?? 0)))} to {pct(Math.max(...VERSION_IDS.map((v) => s[layer][v]?.pct ?? 0)))})
+            on glacial clay ({pct(s[layer].adjusted_pct)})
           </Typography>
         ))}
         {factors.map((f) => (
           <Typography component="li" variant="body2" key={f.id}>
-            <b>{f.label}</b>: {pct(f[layer].A.pct)} (range {pct(Math.min(...VERSION_IDS.map((v) => f[layer][v]?.pct ?? 0)))} to {pct(Math.max(...VERSION_IDS.map((v) => f[layer][v]?.pct ?? 0)))})
+            <b>{f.label}</b>: {pct(f[layer].A.pct)}
           </Typography>
         ))}
       </Box>
@@ -151,6 +151,45 @@ function Example({ ex }) {
   );
 }
 
+/** Moisture: median moduli per survey, both regions (not tied to the region switch). */
+function MoistureTable() {
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    loadResults('moisture_surveys').then((d) => setRows(d.rows)).catch(setError);
+  }, []);
+  if (error) return <Typography variant="body2" color="text.secondary">Moisture table not available ({error.message}).</Typography>;
+  if (!rows) return <Loading />;
+  const order = ['Östergötland', 'Västergötland'];
+  const sorted = [...rows].sort((a, b) => order.indexOf(a.region) - order.indexOf(b.region) || a.survey - b.survey);
+  const wettest = Object.fromEntries(order.map((r) => [r, Math.max(...rows.filter((x) => x.region === r).map((x) => x.rain_mm))]));
+  return (
+    <>
+      <SimpleTable
+        rows={sorted.map((r, i) => ({ ...r, regionLabel: i === 0 || sorted[i - 1].region !== r.region ? r.region : '' }))}
+        highlight={(r) => r.rain_mm === wettest[r.region]}
+        columns={[
+          { key: 'regionLabel', label: 'Region', align: 'left', format: (v) => <b>{v}</b> },
+          { key: 'date', label: 'Survey', align: 'left' },
+          { key: 'rain_mm', label: 'Rain, 14 days before', format: (v) => `${v} mm` },
+          { key: 'E1', label: 'E1 (MPa)', format: (v) => fmt(v) },
+          { key: 'E2', label: 'E2 (MPa)', format: (v) => fmt(v) },
+          { key: 'E3', label: 'E3 (MPa)', format: (v) => fmt(v) },
+          { key: 'E4', label: 'E4 (MPa)', format: (v, r) => (r.rain_mm === wettest[r.region] ? <b>{fmt(v)}</b> : fmt(v)) },
+        ]}
+      />
+      <Typography variant="body2" sx={{ mb: 1 }}>
+        <b>What it shows:</b> in the wettest survey of each region (highlighted) the subgrade E4 is the lowest, about half of the
+        other surveys. The asphalt E1 hardly changes.
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        Medians of the clean bowls (fit ≤ 5%, no modulus at a limit). Rain is one value per region and survey day, so the effect
+        of rain cannot be separated from the survey date or season.
+      </Typography>
+    </>
+  );
+}
+
 function SoilEffectTab() {
   const { data, error } = useResults('soil_effect');
   const [layer, setLayer] = useState('E3');
@@ -163,15 +202,16 @@ function SoilEffectTab() {
     adjusted: s[layer].adjusted, adjusted_pct: s[layer].adjusted_pct, robust: s[layer].robust,
     label: s.reference ? `${fmt(s[layer].adjusted)}` : `${fmt(s[layer].adjusted)} (${pct(s[layer].adjusted_pct)})`,
   }));
+  const versionCols = (get) => ['A', 'B', 'C'].map((v) => ({ key: v, label: `${v}: ${V[v]}`, format: (_, r) => get(r, v) }));
 
   return (
     <>
       <Typography color="text.secondary" sx={{ mb: 2 }}>
-        Which parameters from the Excel go together with the layer stiffness, and which results can be trusted?
-        One regression per layer over {fmt(data.locations)} locations on {data.roads} roads: soil type, layer thicknesses,
-        heavy traffic, ditch depth and ghum_max together. Every result is checked in three versions:
-        {' '}<b>A</b> {V.A.toLowerCase()}, <b>B</b> {V.B.toLowerCase()}, <b>C</b> {V.C.toLowerCase()}.
-        A result is <b>robust</b> only if it is significant with the same sign in all three.
+        Which parameters from the Excel go together with the layer stiffness? One regression per layer over {fmt(data.locations)}
+        {' '}locations on {data.roads} roads: soil type, layer thicknesses, heavy traffic, ditch depth and ghum_max together.
+        {' '}Every result is checked in three versions: <b>A</b> {V.A.toLowerCase()} (all locations), <b>B</b> {V.B.toLowerCase()}
+        {' '}(only stretches of the same road are compared), <b>C</b> {V.C.toLowerCase()} (moduli stuck at a limit left out).
+        {' '}<b>✓ robust</b> = significant with the same sign in all three. Bold = significant, grey = not significant.
       </Typography>
 
       <ToggleButtonGroup size="small" exclusive value={layer} onChange={(_, v) => v && setLayer(v)} sx={{ mb: 2 }}>
@@ -183,8 +223,8 @@ function SoilEffectTab() {
       <SubTitle>1. Soil type: typical {L.name} for the same road structure and traffic</SubTitle>
       <SoilChart rows={chartRows} layer={L.name} />
       <Typography variant="body2" color="text.secondary">
-        Adjusted typical value: every location gets the same thickness, traffic, ditch depth and ghum_max, only the soil changes.
-        Blue = robust difference from glacial clay, grey = not robust, dark grey = glacial clay (reference).
+        Every location gets the same thickness, traffic, ditch depth and ghum_max; only the soil changes.
+        Blue = robust difference from glacial clay, light grey = not robust, dark grey = glacial clay (reference).
         “Other soils” mixes many small soil types and is not interpreted.
       </Typography>
       <SimpleTable
@@ -194,47 +234,34 @@ function SoilEffectTab() {
           { key: 'soil_en', label: 'Soil', align: 'left', format: (v, r) => `${v} (${r.soil})` },
           { key: 'locations', label: 'Locations', format: (v) => fmt(v) },
           { key: 'adj', label: 'Typical (MPa)', format: (_, r) => fmt(r[layer].adjusted) },
-          ...VERSION_IDS.map((v) => ({
-            key: v, label: `${v}: ${V[v]}`, format: (_, r) => (r.reference ? 'reference' : <Eff c={r[layer][v]} />),
-          })),
+          ...versionCols((r, v) => (r.reference ? 'reference' : <Eff c={r[layer][v]} />)),
           { key: 'rob', label: 'Robust?', format: (_, r) => (r.reference ? '' : r.mixed ? 'not interpreted' : <Robust v={r[layer].robust} />) },
         ]}
       />
 
       <SubTitle>2. Other road factors: change in {L.name} for one step, all else equal</SubTitle>
       <SimpleTable
-        rows={data.factors}
+        rows={data.factors.filter((f) => !f.control)}
         columns={[
           { key: 'label', label: 'Factor (one step)', align: 'left' },
-          ...VERSION_IDS.map((v) => ({ key: v, label: `${v}: ${V[v]}`, format: (_, r) => <Eff c={r[layer][v]} /> })),
-          { key: 'rob', label: 'Robust?', format: (_, r) => (r.control ? 'control only' : <Robust v={r[layer].robust} />) },
+          ...versionCols((r, v) => <Eff c={r[layer][v]} />),
+          { key: 'rob', label: 'Robust?', format: (_, r) => <Robust v={r[layer].robust} /> },
         ]}
       />
       <Box component="ul" sx={{ mt: 0, pl: 2.5, '& li': { mb: 0.5 } }}>
-        {data.factors.map((f) => (
+        {data.factors.filter((f) => !f.control && NOTES[f.id]).map((f) => (
           <Typography component="li" variant="body2" key={f.id}><b>{f.label}:</b> {NOTES[f.id]}</Typography>
         ))}
       </Box>
       <Typography variant="body2" color="text.secondary">
-        Bold = significant, grey = not significant, n/a = cannot be estimated within roads. Heavy traffic is on a log scale:
-        the effect is for twice as many heavy vehicles (e.g. 200 → 400 per day).
+        Heavy traffic is on a log scale: the effect is for twice as many heavy vehicles (e.g. 200 → 400 per day).
+        The layer thicknesses are also in the model, so every effect is for the same road structure (not shown: thickness is an
+        input of the backcalculation itself).
+        {' '}n/a = cannot be estimated within roads.
       </Typography>
 
-      <SubTitle>3. How much do these parameters explain?</SubTitle>
-      <SimpleTable
-        rows={LAYERS.map((l) => ({ name: l.name, ...data.r2[l.id], between: data.between_location_share[l.id], nC: data.n[l.id].C }))}
-        columns={[
-          { key: 'name', label: 'Layer', align: 'left' },
-          ...VERSION_IDS.map((v) => ({ key: v, label: `R² ${v}`, format: (x) => `${fmt(100 * x)}%` })),
-          { key: 'nC', label: 'Locations in C', format: (x) => fmt(x) },
-          { key: 'between', label: 'Variation between locations', format: (x) => `${fmt(100 * x)}%` },
-        ]}
-      />
-      <Typography variant="body2" color="text.secondary">
-        R² = share of the differences between locations explained by the parameters. The last column shows how much of all
-        variation is between locations; the rest is between surveys at the same location (season, moisture), which no road
-        parameter can explain. For the subgrade (E4) most variation is between surveys, so a low R² is expected.
-      </Typography>
+      <SubTitle>3. Moisture: stiffness in each survey (both regions)</SubTitle>
+      <MoistureTable />
 
       {data.example && (
         <Box sx={{ mt: 4, pt: 2.5, borderTop: 1, borderColor: 'divider' }}>
